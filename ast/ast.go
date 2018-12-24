@@ -3,7 +3,7 @@
 package ast
 
 import (
-	"github.com/Zaba505/gqlc/graphql/token"
+	"github.com/gqlc/graphql/token"
 	"strings"
 )
 

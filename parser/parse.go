@@ -4,9 +4,9 @@ package parser
 
 import (
 	"fmt"
-	"github.com/Zaba505/gqlc/graphql/ast"
-	"github.com/Zaba505/gqlc/graphql/lexer"
-	"github.com/Zaba505/gqlc/graphql/token"
+	"github.com/gqlc/graphql/ast"
+	"github.com/gqlc/graphql/lexer"
+	"github.com/gqlc/graphql/token"
 	"io"
 	"io/ioutil"
 	"os"

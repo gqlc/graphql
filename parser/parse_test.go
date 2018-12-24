@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/Zaba505/gqlc/graphql/token"
+	"github.com/gqlc/graphql/token"
 	"os"
 	"path/filepath"
 	"strings"

@@ -4,7 +4,7 @@ package lexer
 
 import (
 	"fmt"
-	"github.com/Zaba505/gqlc/graphql/token"
+	"github.com/gqlc/graphql/token"
 	"strings"
 	"unicode"
 	"unicode/utf8"

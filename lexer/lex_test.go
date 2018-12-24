@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"github.com/Zaba505/gqlc/graphql/token"
+	"github.com/gqlc/graphql/token"
 	"testing"
 )
 
