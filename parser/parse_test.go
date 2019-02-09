@@ -55,6 +55,10 @@ func TestParseDoc(t *testing.T) {
 			}`,
 		},
 		{
+			Name: "emptyObject",
+			Doc: `type Test {}`,
+		},
+		{
 			Name: "interface",
 			Doc: `interface One @one @two {
 				one(): One @one @two

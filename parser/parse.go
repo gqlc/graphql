@@ -652,6 +652,7 @@ func (p *parser) parseObject(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 		p.pk = item
 		return
 	}
+	p.pk = lexer.Item{}
 
 	objType.Fields = &ast.FieldList{
 		Opening: item.Pos,
