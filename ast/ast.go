@@ -210,10 +210,10 @@ type (
 	}
 
 	// ListLit represents a list literal value.
-	ListLit struct {}
+	ListLit struct{}
 
 	// ObjLit represents an object literal value.
-	ObjLit struct {}
+	ObjLit struct{}
 
 	// NonNull represents an identifier with the non-null character, '!', after it.
 	NonNull struct {
@@ -308,6 +308,8 @@ type (
 func (x *BadExpr) Pos() token.Pos           { return x.From }
 func (x *Ident) Pos() token.Pos             { return x.NamePos }
 func (x *BasicLit) Pos() token.Pos          { return x.ValuePos }
+func (x *ListLit) Pos() token.Pos           { return 0 } // TODO
+func (x *ObjLit) Pos() token.Pos            { return 0 } // TODO
 func (x *List) Pos() token.Pos              { return x.Type.Pos() - 1 }
 func (x *NonNull) Pos() token.Pos           { return x.Type.Pos() }
 func (x *DirectiveLit) Pos() token.Pos      { return x.AtPos }
@@ -325,6 +327,8 @@ func (x *Extension) Pos() token.Pos         { return x.Extend }
 func (x *BadExpr) End() token.Pos  { return x.To }
 func (x *Ident) End() token.Pos    { return token.Pos(int(x.NamePos) + len(x.Name)) }
 func (x *BasicLit) End() token.Pos { return x.ValuePos + token.Pos(len(x.Value)) }
+func (x *ListLit) End() token.Pos  { return 0 } // TODO
+func (x *ObjLit) End() token.Pos   { return 0 } // TODO
 func (x *List) End() token.Pos     { return x.Type.End() + 1 }
 func (x *NonNull) End() token.Pos  { return x.Type.End() + 1 }
 func (x *DirectiveLit) End() token.Pos {
@@ -354,6 +358,8 @@ func (x *Extension) End() token.Pos     { return x.Type.End() }
 func (*BadExpr) exprNode()           {}
 func (*Ident) exprNode()             {}
 func (*BasicLit) exprNode()          {}
+func (*ListLit) exprNode()           {}
+func (*ObjLit) exprNode()            {}
 func (*List) exprNode()              {}
 func (*NonNull) exprNode()           {}
 func (*DirectiveLit) exprNode()      {}
