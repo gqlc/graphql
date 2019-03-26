@@ -169,6 +169,17 @@ func IsValidLoc(l string) (loc Loc, ok bool) {
 	return
 }
 
+// String returns the string representation of a Loc.
+func (l Loc) String() (s string) {
+	for k, v := range locs {
+		if v == l {
+			s = k
+			break
+		}
+	}
+	return
+}
+
 // An expression is represented by a tree consisting of one
 // or more of the following concrete expression nodes.
 //
@@ -197,6 +208,12 @@ type (
 	List struct {
 		Type Expr
 	}
+
+	// ListLit represents a list literal value.
+	ListLit struct {}
+
+	// ObjLit represents an object literal value.
+	ObjLit struct {}
 
 	// NonNull represents an identifier with the non-null character, '!', after it.
 	NonNull struct {
