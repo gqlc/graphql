@@ -68,6 +68,11 @@ func TestParseDoc(t *testing.T) {
 			}`,
 		},
 		{
+			Name: "interface2",
+			Doc: `interface Test2 {}`,
+			Print: true,
+		},
+		{
 			Name: "union",
 			Doc:  "union Test @one @two = One | Two | Three",
 		},

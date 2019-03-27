@@ -693,6 +693,7 @@ func (p *parser) parseInterface(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 	if item.Typ != token.LBRACE {
 		return
 	}
+	p.pk = lexer.Item{}
 
 	interfaceType.Fields = &ast.FieldList{
 		Opening: item.Pos,
