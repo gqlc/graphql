@@ -777,6 +777,7 @@ func (p *parser) parseEnum(item lexer.Item, dg *ast.DocGroup, doc *ast.Document)
 	if item.Typ != token.LBRACE {
 		return
 	}
+	p.pk = lexer.Item{}
 
 	eType.Fields = &ast.FieldList{
 		Opening: item.Pos,
@@ -842,6 +843,7 @@ func (p *parser) parseInput(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 		p.pk = item
 		return
 	}
+	p.pk = lexer.Item{}
 
 	inType.Fields = &ast.FieldList{
 		Opening: item.Pos,

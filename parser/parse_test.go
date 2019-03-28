@@ -56,7 +56,7 @@ func TestParseDoc(t *testing.T) {
 		},
 		{
 			Name: "emptyObject",
-			Doc: `type Test {}`,
+			Doc:  `type Test {}`,
 		},
 		{
 			Name: "interface",
@@ -69,8 +69,7 @@ func TestParseDoc(t *testing.T) {
 		},
 		{
 			Name: "interface2",
-			Doc: `interface Test2 {}`,
-			Print: true,
+			Doc:  `interface Test2 {}`,
 		},
 		{
 			Name: "union",
@@ -89,11 +88,19 @@ func TestParseDoc(t *testing.T) {
 			}`,
 		},
 		{
+			Name: "enum2",
+			Doc:  `enum Test2 {}`,
+		},
+		{
 			Name: "input",
 			Doc: `input Test @one @two {
 				one: One @one
 				two: Two = 2 @one @two
 			}`,
+		},
+		{
+			Name: "input2",
+			Doc:  `input Test2 {}`,
 		},
 		{
 			Name: "directive",
