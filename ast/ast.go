@@ -246,6 +246,12 @@ type (
 // nodes.
 //
 type (
+	// ImportedType represents an imported type.
+	ImportedType struct {
+		Namespace string // where it's imported from
+		Spec      Spec   // imported type spec
+	}
+
 	// SchemaType represents a schema type declaration.
 	SchemaType struct {
 		Schema token.Pos // position of "schema" keyword
@@ -314,6 +320,7 @@ func (x *List) Pos() token.Pos              { return x.Type.Pos() - 1 }
 func (x *NonNull) Pos() token.Pos           { return x.Type.Pos() }
 func (x *DirectiveLit) Pos() token.Pos      { return x.AtPos }
 func (x *DirectiveLocation) Pos() token.Pos { return x.Start }
+func (x *ImportedType) Pos() token.Pos      { return x.Spec.Pos() }
 func (x *SchemaType) Pos() token.Pos        { return x.Schema }
 func (x *ScalarType) Pos() token.Pos        { return x.Scalar }
 func (x *ObjectType) Pos() token.Pos        { return x.Object }
@@ -345,6 +352,7 @@ func (x *DirectiveLocation) End() token.Pos {
 	}
 	return token.NoPos
 }
+func (x *ImportedType) End() token.Pos  { return x.Spec.End() }
 func (x *SchemaType) End() token.Pos    { return x.Fields.End() }
 func (x *ScalarType) End() token.Pos    { return token.NoPos }
 func (x *ObjectType) End() token.Pos    { return x.Fields.End() }
@@ -364,6 +372,7 @@ func (*List) exprNode()              {}
 func (*NonNull) exprNode()           {}
 func (*DirectiveLit) exprNode()      {}
 func (*DirectiveLocation) exprNode() {}
+func (*ImportedType) exprNode()      {}
 func (*SchemaType) exprNode()        {}
 func (*ScalarType) exprNode()        {}
 func (*ObjectType) exprNode()        {}
