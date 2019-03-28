@@ -74,15 +74,15 @@ func ParseDoc(dset *token.DocSet, name string, src io.Reader, mode Mode) (*ast.D
 // ParseDocs parses a set of GraphQL documents. Any import paths
 // in a doc will be resolved against the provided doc names in the docs map.
 //
-func ParseDocs(dset *token.DocSet, docs map[string]io.Reader, mode Mode) (map[string]*ast.Document, error) {
-	odocs := make(map[string]*ast.Document)
+func ParseDocs(dset *token.DocSet, docs map[string]io.Reader, mode Mode) ([]*ast.Document, error) {
+	odocs := make([]*ast.Document, len(docs))
 
 	for name, src := range docs {
 		doc, err := ParseDoc(dset, name, src, mode)
 		if err != nil {
 			return odocs, err
 		}
-		odocs[name] = doc
+		odocs = append(odocs, doc)
 	}
 	return nil, nil
 }

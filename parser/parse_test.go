@@ -136,6 +136,11 @@ func TestParseDoc(t *testing.T) {
 	}
 }
 
+func TestParseDocs(t *testing.T) {
+	t.Skip("TODO")
+	// TODO
+}
+
 var printDir = flag.Bool("printDir", false, "print the ast from ParseDir test")
 
 func TestParseDir(t *testing.T) {
