@@ -197,6 +197,12 @@ type (
 		Name    string
 	}
 
+	// A SelectorExpr node represents an expression followed by a selector.
+	SelectorExpr struct {
+		X   Expr   // expression
+		Sel *Ident // field selector
+	}
+
 	// BasicLit represents a literal of basic type.
 	BasicLit struct {
 		ValuePos token.Pos   // literal position
@@ -261,14 +267,14 @@ type (
 	// ScalarType represents a scalar type declaration.
 	ScalarType struct {
 		Scalar token.Pos // position of "scalar" keyword
-		Name   *Ident
+		Name   Expr
 	}
 
 	// ObjectType represents an object type declaration.
 	ObjectType struct {
 		Object  token.Pos // position of "type" keyword
 		ImplPos token.Pos // position of "implements" keyword
-		Impls   []*Ident  // implemented interfaces; or nil
+		Impls   []Expr    // implemented interfaces; or nil
 		Fields  *FieldList
 	}
 
@@ -281,7 +287,7 @@ type (
 	// UnionType represents a union type declaration.
 	UnionType struct {
 		Union   token.Pos // position of "union" keyword
-		Members []*Ident
+		Members []Expr
 	}
 
 	// EnumType represents an enum type declaration.
@@ -303,16 +309,11 @@ type (
 		OnPos     token.Pos            // position of "on" keyword
 		Locs      []*DirectiveLocation // valid locations where this directive can be applied
 	}
-
-	// Extension represents an type extension.
-	Extension struct {
-		Extend token.Pos // position of "extend" keyword
-		Type   *TypeSpec // the extended type
-	}
 )
 
 func (x *BadExpr) Pos() token.Pos           { return x.From }
 func (x *Ident) Pos() token.Pos             { return x.NamePos }
+func (x *SelectorExpr) Pos() token.Pos      { return x.X.Pos() }
 func (x *BasicLit) Pos() token.Pos          { return x.ValuePos }
 func (x *ListLit) Pos() token.Pos           { return 0 } // TODO
 func (x *ObjLit) Pos() token.Pos            { return 0 } // TODO
@@ -329,15 +330,15 @@ func (x *UnionType) Pos() token.Pos         { return x.Union }
 func (x *EnumType) Pos() token.Pos          { return x.Enum }
 func (x *InputType) Pos() token.Pos         { return x.Input }
 func (x *DirectiveType) Pos() token.Pos     { return x.Directive }
-func (x *Extension) Pos() token.Pos         { return x.Extend }
 
-func (x *BadExpr) End() token.Pos  { return x.To }
-func (x *Ident) End() token.Pos    { return token.Pos(int(x.NamePos) + len(x.Name)) }
-func (x *BasicLit) End() token.Pos { return x.ValuePos + token.Pos(len(x.Value)) }
-func (x *ListLit) End() token.Pos  { return 0 } // TODO
-func (x *ObjLit) End() token.Pos   { return 0 } // TODO
-func (x *List) End() token.Pos     { return x.Type.End() + 1 }
-func (x *NonNull) End() token.Pos  { return x.Type.End() + 1 }
+func (x *BadExpr) End() token.Pos      { return x.To }
+func (x *Ident) End() token.Pos        { return token.Pos(int(x.NamePos) + len(x.Name)) }
+func (x *SelectorExpr) End() token.Pos { return x.Sel.End() }
+func (x *BasicLit) End() token.Pos     { return x.ValuePos + token.Pos(len(x.Value)) }
+func (x *ListLit) End() token.Pos      { return 0 } // TODO
+func (x *ObjLit) End() token.Pos       { return 0 } // TODO
+func (x *List) End() token.Pos         { return x.Type.End() + 1 }
+func (x *NonNull) End() token.Pos      { return x.Type.End() + 1 }
 func (x *DirectiveLit) End() token.Pos {
 	if x.Args == nil {
 		return x.AtPos + token.Pos(len(x.Name))
@@ -361,10 +362,10 @@ func (x *UnionType) End() token.Pos     { return x.Members[0].End() }
 func (x *EnumType) End() token.Pos      { return x.Fields.End() }
 func (x *InputType) End() token.Pos     { return x.Fields.End() }
 func (x *DirectiveType) End() token.Pos { return x.Locs[len(x.Locs)-1].End() }
-func (x *Extension) End() token.Pos     { return x.Type.End() }
 
 func (*BadExpr) exprNode()           {}
 func (*Ident) exprNode()             {}
+func (*SelectorExpr) exprNode()      {}
 func (*BasicLit) exprNode()          {}
 func (*ListLit) exprNode()           {}
 func (*ObjLit) exprNode()            {}
@@ -381,7 +382,6 @@ func (*UnionType) exprNode()         {}
 func (*EnumType) exprNode()          {}
 func (*InputType) exprNode()         {}
 func (*DirectiveType) exprNode()     {}
-func (*Extension) exprNode()         {}
 
 type (
 	// The Spec type stands for any of *ImportSpec, and *TypeSpec
@@ -401,9 +401,15 @@ type (
 	// A TypeSpec node represents a GraphQL type declaration.
 	TypeSpec struct {
 		Doc  *DocGroup       // associated documentation; or nil
-		Name *Ident          // type name; or nil
+		Name Expr            // type name; or nil
 		Dirs []*DirectiveLit // applied directives; or nil
 		Type Expr            // *Ident, or any of the *XxxTypes
+	}
+
+	// A TypeExtensionSpec node represents a GraphQL type extension.
+	TypeExtensionSpec struct {
+		Doc  *DocGroup
+		Type *TypeSpec
 	}
 )
 
@@ -415,7 +421,8 @@ func (s *ImportSpec) Pos() token.Pos {
 	}
 	return s.Path.Pos()
 }
-func (s *TypeSpec) Pos() token.Pos { return s.Name.Pos() }
+func (s *TypeSpec) Pos() token.Pos          { return s.Name.Pos() }
+func (s *TypeExtensionSpec) Pos() token.Pos { return s.Type.Pos() }
 
 func (s *ImportSpec) End() token.Pos {
 	if s.EndPos != 0 {
@@ -430,12 +437,16 @@ func (s *TypeSpec) End() token.Pos {
 	}
 	return e
 }
+func (s *TypeExtensionSpec) End() token.Pos {
+	return s.Type.End()
+}
 
 // specNode() ensures that only spec nodes can be
 // assigned to a Spec.
 //
-func (*ImportSpec) specNode() {}
-func (*TypeSpec) specNode()   {}
+func (*ImportSpec) specNode()        {}
+func (*TypeSpec) specNode()          {}
+func (*TypeExtensionSpec) specNode() {}
 
 type (
 	// BadDecl represents a malformed declaration.

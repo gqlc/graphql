@@ -1,83 +1,185 @@
 package parser
 
 import (
-	"encoding/json"
-	"flag"
-	"fmt"
+	"github.com/gqlc/graphql/ast"
 	"github.com/gqlc/graphql/token"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
 
 func TestParseDoc(t *testing.T) {
-	testCases := []struct {
-		Name  string // test name
-		Doc   string // test GraphQL document
-		Err   error  // Expected error; or empty
-		Print bool   // Helper for checking ast structure
-	}{
-		{
-			Name: "justImports",
-			Doc: `import (
+	t.Run("imports", func(subT *testing.T) {
+		justImports := `import (
 	"one.gql"
 	"two.gql"
-)`,
-		},
-		{
-			Name: "schema",
-			Doc: `schema @one @two() @three(a: "A") {
+)`
+		doc, err := parse("justImports", justImports)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Imports) == 0 {
+			subT.Fail()
+			return
+		}
+
+		if len(doc.Imports[0].Specs) != 2 {
+			subT.Fail()
+		}
+	})
+
+	t.Run("schema", func(subT *testing.T) {
+		subT.Run("perfect", func(triT *testing.T) {
+			schema := `schema @one @two() @three(a: "A") {
 	query: Query!
 	mutation: Mutation
 	subscription: Subscription
-}`,
-		},
-		{
-			Name: "invalidSchema",
-			Doc: `schema {
+}`
+			doc, err := parse("perfect", schema)
+			if err != nil {
+				triT.Error(err)
+				return
+			}
+
+			if len(doc.Schemas) == 0 {
+				triT.Fail()
+				return
+			}
+
+			spec := doc.Schemas[0].Specs[0].(*ast.TypeSpec)
+			if len(spec.Dirs) != 3 {
+				triT.Fail()
+				return
+			}
+
+			s := spec.Type.(*ast.SchemaType)
+			if len(s.Fields.List) != 3 {
+				triT.Fail()
+				return
+			}
+		})
+
+		subT.Run("invalid", func(triT *testing.T) {
+			schema := `schema {
 	query: Query
 	mut: Mutation
-}`,
-			Err: fmt.Errorf("parser: invalidSchema:3: unexpected \"mut\" in parseSchema"),
-		},
-		{
-			Name: "scalar",
-			Doc:  "scalar Test @one @two() @three(a: 1, b: 2)",
-		},
-		{
-			Name: "object",
-			Doc: `type Test implements One & Two @one @two {
+}`
+			_, err := parse("invalid", schema)
+			if err == nil {
+				triT.Fail()
+				return
+			}
+		})
+	})
+
+	t.Run("scalar", func(subT *testing.T) {
+		scalar := `scalar Test @one @two() @three(a: 1, b: 2)`
+		doc, err := parse("scalar", scalar)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		if len(spec.Dirs) == 0 {
+			subT.Fail()
+			return
+		}
+	})
+
+	t.Run("object", func(subT *testing.T) {
+		obj := `type Test implements One & Two @one @two {
 				one(): One @one @two
 				two(one: One): Two! @one @two
 				thr(one: One = 1, two: Two): [Thr]! @one @two
 				for(one: One = 1 @one @two, two: Two = 2 @one @two, thr: Thr = 3 @one @two): [For!]! @one @two 
-			}`,
-		},
-		{
-			Name: "emptyObject",
-			Doc:  `type Test {}`,
-		},
-		{
-			Name: "interface",
-			Doc: `interface One @one @two {
+			}`
+		doc, err := parse("object", obj)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		if len(spec.Dirs) == 0 {
+			subT.Fail()
+			return
+		}
+
+		o := spec.Type.(*ast.ObjectType)
+		if len(o.Fields.List) != 4 {
+			subT.Fail()
+		}
+	})
+
+	t.Run("interface", func(subT *testing.T) {
+		inter := `interface One @one @two {
 				one(): One @one @two
 				two(one: One): Two! @one @two
 				thr(one: One = 1, two: Two): [Thr]! @one @two
 				for(one: One = 1 @one @two, two: Two = 2 @one @two, thr: Thr = 3 @one @two): [For!]! @one @two
-			}`,
-		},
-		{
-			Name: "interface2",
-			Doc:  `interface Test2 {}`,
-		},
-		{
-			Name: "union",
-			Doc:  "union Test @one @two = One | Two | Three",
-		},
-		{
-			Name: "enum",
-			Doc: `enum Test @one @two {
+			}`
+		doc, err := parse("interface", inter)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		if len(spec.Dirs) == 0 {
+			subT.Fail()
+			return
+		}
+
+		o := spec.Type.(*ast.InterfaceType)
+		if len(o.Fields.List) != 4 {
+			subT.Fail()
+		}
+	})
+
+	t.Run("union", func(subT *testing.T) {
+		uni := `union Test @one @two = One | Two | Three`
+		doc, err := parse("union", uni)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		if len(spec.Dirs) == 0 {
+			subT.Fail()
+			return
+		}
+
+		o := spec.Type.(*ast.UnionType)
+		if len(o.Members) != 3 {
+			subT.Fail()
+		}
+	})
+
+	t.Run("enum", func(subT *testing.T) {
+		enu := `enum Test @one @two {
 				"One before" ONE @one
 				"""
 				Two above
@@ -85,93 +187,131 @@ func TestParseDoc(t *testing.T) {
 				TWO	@one @two
 				"Three above"
 				"Three before" THREE @one @two @three
-			}`,
-		},
-		{
-			Name: "enum2",
-			Doc:  `enum Test2 {}`,
-		},
-		{
-			Name: "input",
-			Doc: `input Test @one @two {
+			}`
+		doc, err := parse("enum", enu)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		if len(spec.Dirs) != 2 {
+			subT.Fail()
+			return
+		}
+
+		o := spec.Type.(*ast.EnumType)
+		if len(o.Fields.List) != 3 {
+			subT.Fail()
+		}
+	})
+
+	t.Run("input", func(subT *testing.T) {
+		inp := `input Test @one @two {
 				one: One @one
 				two: Two = 2 @one @two
-			}`,
-		},
-		{
-			Name: "input2",
-			Doc:  `input Test2 {}`,
-		},
-		{
-			Name: "directive",
-			Doc:  `directive @test(one: One = 1 @one, two: Two = 2 @one @two) on SCHEMA | FIELD_DEFINITION`,
-		},
-	}
+			}`
+		doc, err := parse("input", inp)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
 
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", " ")
-	for _, testCase := range testCases {
-		t.Run(testCase.Name, func(subT *testing.T) {
-			src := strings.NewReader(testCase.Doc)
-			d, err := ParseDoc(token.NewDocSet(), testCase.Name, src, 0)
-			if testCase.Err != nil {
-				if err.Error() == testCase.Err.Error() {
-					return
-				}
-				subT.Error(err)
-				return
-			}
-			if err != nil {
-				subT.Errorf("unexpected error from parser: %s", err)
-			}
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
 
-			if !testCase.Print {
-				return
-			}
+		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		if len(spec.Dirs) != 2 {
+			subT.Fail()
+			return
+		}
 
-			if err = enc.Encode(d); err != nil {
-				subT.Errorf("unexpected error while marshalling ast.Document to json: %s", err)
-			}
-		})
-	}
+		o := spec.Type.(*ast.InputType)
+		if len(o.Fields.List) != 2 {
+			subT.Fail()
+		}
+	})
+
+	t.Run("directive", func(subT *testing.T) {
+		dir := `directive @test(one: One = 1 @one, two: Two = 2 @one @two) on SCHEMA | FIELD_DEFINITION`
+		doc, err := parse("directive", dir)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+
+		o := spec.Type.(*ast.DirectiveType)
+		if len(o.Args.List) != 2 {
+			subT.Fail()
+		}
+		if len(o.Locs) != 2 {
+			subT.Fail()
+		}
+	})
+
+	t.Run("extension", func(subT *testing.T) {
+		ex := `extend type Test @one`
+		doc, err := parse("extension", ex)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec := doc.Types[0].Specs[0].(*ast.TypeExtensionSpec)
+
+		o := spec.Type
+		if o.Type == nil {
+			subT.Fail()
+		}
+	})
+
+	t.Run("importIdent", func(subT *testing.T) {
+		ex := `extend type one.Test @one`
+		doc, err := parse("extension", ex)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec := doc.Types[0].Specs[0].(*ast.TypeExtensionSpec)
+
+		o := spec.Type
+		if o.Name == nil {
+			subT.Fail()
+			return
+		}
+
+		name := o.Name.(*ast.SelectorExpr)
+		if name.X.(*ast.Ident).Name != "one" || name.Sel.Name != "Test" {
+			subT.Fail()
+		}
+	})
 }
 
-func TestParseDocs(t *testing.T) {
-	t.Skip("TODO")
-	// TODO
-}
-
-var printDir = flag.Bool("printDir", false, "print the ast from ParseDir test")
-
-func TestParseDir(t *testing.T) {
-	wd, err := os.Getwd()
-	if err != nil {
-		t.Skipf("unable to get current working directory: %s", err)
-		return
-	}
-
-	dset := token.NewDocSet()
-	docs, err := ParseDir(dset, filepath.Join(wd, "testdir"), func(info os.FileInfo) bool {
-		return info.IsDir() && info.Name() == "skipdir"
-	}, 0)
-
-	if err != nil {
-		t.Errorf("unexpected error encountered when parsing directory, 'testdir': %s", err)
-		return
-	}
-
-	doc, ok := docs["test.gql"]
-	if !ok {
-		t.Fail()
-	}
-
-	if !*printDir {
-		return
-	}
-
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", " ")
-	if err = enc.Encode(doc); err != nil {
-		t.Errorf("unexpected error while marshalling ast.Document to json: %s", err)
-	}
+func parse(name, src string) (*ast.Document, error) {
+	return ParseDoc(token.NewDocSet(), name, strings.NewReader(src), 0)
 }

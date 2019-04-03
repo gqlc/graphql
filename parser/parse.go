@@ -84,7 +84,7 @@ func ParseDocs(dset *token.DocSet, docs map[string]io.Reader, mode Mode) ([]*ast
 		}
 		odocs = append(odocs, doc)
 	}
-	return nil, nil
+	return odocs, nil
 }
 
 type parser struct {
@@ -226,7 +226,6 @@ func (p *parser) parseDoc(dg *ast.DocGroup, d *ast.Document) {
 	// Slurp up documentation
 	cdg, item := p.addDocs(dg)
 
-Loop:
 	switch item.Typ {
 	case token.ERR:
 		p.unexpected(item, "parseDoc")
@@ -251,8 +250,7 @@ Loop:
 	case token.DIRECTIVE:
 		p.parseDirective(item, cdg, d)
 	case token.EXTEND:
-		item = p.next()
-		goto Loop
+		p.parseExtension(item, cdg, d)
 	}
 
 	p.parseDoc(dg, d)
@@ -299,7 +297,7 @@ func (p *parser) parseImport(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 
 		// Enforce strings only
 		if nitem.Typ != token.STRING {
-			p.unexpected(nitem, "parseImport")
+			break
 		}
 
 		// Create import spec node and add it to the larger import gen decl
@@ -577,6 +575,28 @@ func (p *parser) parseType(item lexer.Item) (e ast.Expr) {
 	return
 }
 
+// parseIdent parses an identifier
+func (p *parser) parseIdent(context string) ast.Expr {
+	name := p.expect(token.IDENT, context)
+	id := &ast.Ident{
+		NamePos: name.Pos,
+		Name:    name.Val,
+	}
+
+	if p.peek().Typ != token.PERIOD {
+		return id
+	}
+
+	name = p.expect(token.IDENT, context)
+	return &ast.SelectorExpr{
+		X: id,
+		Sel: &ast.Ident{
+			NamePos: name.Pos,
+			Name:    name.Val,
+		},
+	}
+}
+
 // parseScalar parses a scalar declaration
 func (p *parser) parseScalar(item lexer.Item, dg *ast.DocGroup, doc *ast.Document) {
 	scalarGen := &ast.GenDecl{
@@ -586,14 +606,11 @@ func (p *parser) parseScalar(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 	}
 	doc.Types = append(doc.Types, scalarGen)
 
-	name := p.expect(token.IDENT, "parseScalar")
+	name := p.parseIdent("parseScalar")
 
 	scalarSpec := &ast.TypeSpec{
-		Doc: dg,
-		Name: &ast.Ident{
-			NamePos: name.Pos,
-			Name:    name.Val,
-		},
+		Doc:  dg,
+		Name: name,
 	}
 	scalarGen.Specs = append(scalarGen.Specs, scalarSpec)
 
@@ -615,14 +632,11 @@ func (p *parser) parseObject(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 	}
 	doc.Types = append(doc.Types, objGen)
 
-	name := p.expect(token.IDENT, "parseObject")
+	name := p.parseIdent("parseObject")
 
 	objSpec := &ast.TypeSpec{
-		Doc: dg,
-		Name: &ast.Ident{
-			NamePos: name.Pos,
-			Name:    name.Val,
-		},
+		Doc:  dg,
+		Name: name,
 	}
 	objGen.Specs = append(objGen.Specs, objSpec)
 
@@ -631,7 +645,7 @@ func (p *parser) parseObject(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 	}
 	objSpec.Type = objType
 
-	item = p.peek()
+	item = p.next()
 	if item.Typ == token.IMPLEMENTS {
 		objType.ImplPos = item.Pos
 		for {
@@ -669,14 +683,11 @@ func (p *parser) parseInterface(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 	}
 	doc.Types = append(doc.Types, interfaceGen)
 
-	name := p.expect(token.IDENT, "parseInterface")
+	name := p.parseIdent("parseInterface")
 
 	interfaceSpec := &ast.TypeSpec{
-		Doc: dg,
-		Name: &ast.Ident{
-			NamePos: name.Pos,
-			Name:    name.Val,
-		},
+		Doc:  dg,
+		Name: name,
 	}
 	interfaceGen.Specs = append(interfaceGen.Specs, interfaceSpec)
 
@@ -685,8 +696,9 @@ func (p *parser) parseInterface(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 	}
 	interfaceSpec.Type = interfaceType
 
-	item = p.peek()
+	item = p.next()
 	if item.Typ == token.AT {
+		p.pk = item
 		interfaceSpec.Dirs, item = p.parseDirectives(dg)
 	}
 
@@ -710,14 +722,11 @@ func (p *parser) parseUnion(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 	}
 	doc.Types = append(doc.Types, uGen)
 
-	name := p.expect(token.IDENT, "parseUnion")
+	name := p.parseIdent("parseUnion")
 
 	uSpec := &ast.TypeSpec{
-		Doc: dg,
-		Name: &ast.Ident{
-			NamePos: name.Pos,
-			Name:    name.Val,
-		},
+		Doc:  dg,
+		Name: name,
 	}
 	uGen.Specs = append(uGen.Specs, uSpec)
 
@@ -726,8 +735,9 @@ func (p *parser) parseUnion(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 	}
 	uSpec.Type = uType
 
-	item = p.peek()
+	item = p.next()
 	if item.Typ == token.AT {
+		p.pk = item
 		uSpec.Dirs, item = p.parseDirectives(dg)
 	}
 
@@ -753,14 +763,11 @@ func (p *parser) parseEnum(item lexer.Item, dg *ast.DocGroup, doc *ast.Document)
 	}
 	doc.Types = append(doc.Types, eGen)
 
-	name := p.expect(token.IDENT, "parseEnum")
+	name := p.parseIdent("parseEnum")
 
 	eSpec := &ast.TypeSpec{
-		Doc: dg,
-		Name: &ast.Ident{
-			NamePos: name.Pos,
-			Name:    name.Val,
-		},
+		Doc:  dg,
+		Name: name,
 	}
 	eGen.Specs = append(eGen.Specs, eSpec)
 
@@ -769,8 +776,9 @@ func (p *parser) parseEnum(item lexer.Item, dg *ast.DocGroup, doc *ast.Document)
 	}
 	eSpec.Type = eType
 
-	item = p.peek()
+	item = p.next()
 	if item.Typ == token.AT {
+		p.pk = item
 		eSpec.Dirs, item = p.parseDirectives(dg)
 	}
 
@@ -818,14 +826,11 @@ func (p *parser) parseInput(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 	}
 	doc.Types = append(doc.Types, inGen)
 
-	name := p.expect(token.IDENT, "parseInput")
+	name := p.parseIdent("parseInput")
 
 	inSpec := &ast.TypeSpec{
-		Doc: dg,
-		Name: &ast.Ident{
-			NamePos: name.Pos,
-			Name:    name.Val,
-		},
+		Doc:  dg,
+		Name: name,
 	}
 	inGen.Specs = append(inGen.Specs, inSpec)
 
@@ -834,8 +839,9 @@ func (p *parser) parseInput(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 	}
 	inSpec.Type = inType
 
-	item = p.peek()
+	item = p.next()
 	if item.Typ == token.AT {
+		p.pk = item
 		inSpec.Dirs, item = p.parseDirectives(dg)
 	}
 
@@ -931,4 +937,44 @@ func (p *parser) parseDirective(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 
 		dirType.Locs = append(dirType.Locs, &ast.DirectiveLocation{Start: item.Pos, Loc: loc})
 	}
+}
+
+func (p *parser) parseExtension(item lexer.Item, cdg *ast.DocGroup, d *ast.Document) {
+	extGen := &ast.GenDecl{
+		Doc:    cdg,
+		TokPos: item.Pos,
+		Tok:    token.EXTEND,
+	}
+	d.Types = append(d.Types, extGen)
+
+	extSpec := &ast.TypeExtensionSpec{
+		Doc: cdg,
+	}
+	extGen.Specs = append(extGen.Specs, extSpec)
+
+	item = p.next()
+	switch item.Typ {
+	case token.EOF:
+		return
+	case token.IMPORT:
+		p.parseImport(item, cdg, d)
+	case token.SCHEMA:
+		p.parseSchema(item, cdg, d)
+	case token.SCALAR:
+		p.parseScalar(item, cdg, d)
+	case token.TYPE:
+		p.parseObject(item, cdg, d)
+	case token.INTERFACE:
+		p.parseInterface(item, cdg, d)
+	case token.UNION:
+		p.parseUnion(item, cdg, d)
+	case token.ENUM:
+		p.parseEnum(item, cdg, d)
+	case token.INPUT:
+		p.parseInput(item, cdg, d)
+	default:
+		p.unexpected(item, "parseExtension")
+	}
+
+	extSpec.Type = d.Types[len(d.Types)-1].Specs[0].(*ast.TypeSpec)
 }
