@@ -77,12 +77,14 @@ func ParseDoc(dset *token.DocSet, name string, src io.Reader, mode Mode) (*ast.D
 func ParseDocs(dset *token.DocSet, docs map[string]io.Reader, mode Mode) ([]*ast.Document, error) {
 	odocs := make([]*ast.Document, len(docs))
 
+	i := 0
 	for name, src := range docs {
 		doc, err := ParseDoc(dset, name, src, mode)
 		if err != nil {
 			return odocs, err
 		}
-		odocs = append(odocs, doc)
+		odocs[i] = doc
+		i++
 	}
 	return odocs, nil
 }
