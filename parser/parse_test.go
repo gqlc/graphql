@@ -12,6 +12,7 @@ func TestParseDoc(t *testing.T) {
 		justImports := `import (
 	"one.gql"
 	"two.gql"
+	"three"
 )`
 		doc, err := parse("justImports", justImports)
 		if err != nil {
@@ -24,8 +25,17 @@ func TestParseDoc(t *testing.T) {
 			return
 		}
 
-		if len(doc.Imports[0].Specs) != 2 {
+		if len(doc.Imports[0].Specs) != 3 {
 			subT.Fail()
+			return
+		}
+
+		for _, s := range doc.Imports[0].Specs {
+			is := s.(*ast.ImportSpec)
+			if is.Name.Name != "one" && is.Name.Name != "two" && is.Name.Name != "three" {
+				subT.Fail()
+				return
+			}
 		}
 	})
 

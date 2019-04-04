@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // Mode represents a parsing mode.
@@ -301,10 +302,14 @@ func (p *parser) parseImport(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 		if nitem.Typ != token.STRING {
 			break
 		}
+		name := strings.Trim(nitem.Val, "\"")
 
 		// Create import spec node and add it to the larger import gen decl
 		imprtSpec := &ast.ImportSpec{
-			Name: &ast.Ident{},
+			Name: &ast.Ident{
+				Name:    name[:len(name)-len(filepath.Ext(name))],
+				NamePos: nitem.Pos,
+			},
 			Path: &ast.BasicLit{
 				ValuePos: nitem.Pos,
 				Kind:     token.STRING,
