@@ -458,26 +458,37 @@ type (
 	GenDecl struct {
 		Doc    *DocGroup   // associated documentation; or nil
 		TokPos token.Pos   // position of Tok
-		Tok    token.Token // IMPORT, TYPE_KEYWORD (e.g. schema, input, union)
-		Lparen token.Pos   // position of '(' or '{', if any
-		Specs  []Spec
-		Rparen token.Pos // position of ')' or '}', if any
+		Tok    token.Token // TYPE_KEYWORD (e.g. schema, input, union)
+		Spec   Spec
+	}
+
+	// ImportDecl represents an import declaration.
+	ImportDecl struct {
+		Doc    *DocGroup   // associated documentation; or nil
+		TokPos token.Pos   // position of Tok
+		Tok    token.Token // IMPORT
+		Lparen token.Pos   // position of '(', if any
+		Specs  []*ImportSpec
+		Rparen token.Pos // position of ')', if any
 	}
 )
 
-func (d *BadDecl) Pos() token.Pos { return d.From }
-func (d *GenDecl) Pos() token.Pos { return d.TokPos }
+func (d *BadDecl) Pos() token.Pos    { return d.From }
+func (d *GenDecl) Pos() token.Pos    { return d.TokPos }
+func (d *ImportDecl) Pos() token.Pos { return d.TokPos }
 
 func (d *BadDecl) End() token.Pos { return d.To }
-func (d *GenDecl) End() token.Pos {
+func (d *GenDecl) End() token.Pos { return d.Spec.End() }
+func (d *ImportDecl) End() token.Pos {
 	if d.Rparen.IsValid() {
 		return d.Rparen + 1
 	}
 	return d.Specs[0].End()
 }
 
-func (*BadDecl) declNode() {}
-func (*GenDecl) declNode() {}
+func (*BadDecl) declNode()    {}
+func (*GenDecl) declNode()    {}
+func (*ImportDecl) declNode() {}
 
 // Doc represents a single line documentation source i.e. Description or Comment.
 //
@@ -577,7 +588,7 @@ type Document struct {
 	Doc  *DocGroup // associated documentation
 
 	// Names of documents imported by this document; or nil
-	Imports []*GenDecl
+	Imports []*ImportDecl
 
 	Schemas []*GenDecl // Convenient shortcut for accessing schemas; or nil
 	Types   []*GenDecl // All top-level type declarations in doc; or nil

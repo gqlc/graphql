@@ -262,7 +262,7 @@ func (p *parser) parseDoc(dg *ast.DocGroup, d *ast.Document) {
 // parseImport parses a import declarations
 func (p *parser) parseImport(item lexer.Item, dg *ast.DocGroup, doc *ast.Document) {
 	// Create gen decl for import and add it the overall document
-	imprtGen := &ast.GenDecl{
+	imprtGen := &ast.ImportDecl{
 		Doc:    dg,
 		TokPos: item.Pos,
 		Tok:    token.IMPORT,
@@ -342,7 +342,7 @@ func (p *parser) parseSchema(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 		Name: nil,
 		Dirs: dirs,
 	}
-	schemaGen.Specs = append(schemaGen.Specs, schemaSpec)
+	schemaGen.Spec = schemaSpec
 
 	// Create schema type node
 	schemaTyp := &ast.SchemaType{
@@ -619,7 +619,7 @@ func (p *parser) parseScalar(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 		Doc:  dg,
 		Name: name,
 	}
-	scalarGen.Specs = append(scalarGen.Specs, scalarSpec)
+	scalarGen.Spec = scalarSpec
 
 	scalarSpec.Dirs, p.pk = p.parseDirectives(dg)
 
@@ -645,7 +645,7 @@ func (p *parser) parseObject(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 		Doc:  dg,
 		Name: name,
 	}
-	objGen.Specs = append(objGen.Specs, objSpec)
+	objGen.Spec = objSpec
 
 	objType := &ast.ObjectType{
 		Object: item.Pos,
@@ -696,7 +696,7 @@ func (p *parser) parseInterface(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 		Doc:  dg,
 		Name: name,
 	}
-	interfaceGen.Specs = append(interfaceGen.Specs, interfaceSpec)
+	interfaceGen.Spec = interfaceSpec
 
 	interfaceType := &ast.InterfaceType{
 		Interface: item.Pos,
@@ -735,7 +735,7 @@ func (p *parser) parseUnion(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 		Doc:  dg,
 		Name: name,
 	}
-	uGen.Specs = append(uGen.Specs, uSpec)
+	uGen.Spec = uSpec
 
 	uType := &ast.UnionType{
 		Union: item.Pos,
@@ -776,7 +776,7 @@ func (p *parser) parseEnum(item lexer.Item, dg *ast.DocGroup, doc *ast.Document)
 		Doc:  dg,
 		Name: name,
 	}
-	eGen.Specs = append(eGen.Specs, eSpec)
+	eGen.Spec = eSpec
 
 	eType := &ast.EnumType{
 		Enum: item.Pos,
@@ -839,7 +839,7 @@ func (p *parser) parseInput(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 		Doc:  dg,
 		Name: name,
 	}
-	inGen.Specs = append(inGen.Specs, inSpec)
+	inGen.Spec = inSpec
 
 	inType := &ast.InputType{
 		Input: item.Pos,
@@ -906,7 +906,7 @@ func (p *parser) parseDirective(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 			Name:    name.Val,
 		},
 	}
-	dirGen.Specs = append(dirGen.Specs, dirSpec)
+	dirGen.Spec = dirSpec
 
 	dirType := &ast.DirectiveType{
 		Directive: item.Pos,
@@ -957,7 +957,7 @@ func (p *parser) parseExtension(item lexer.Item, cdg *ast.DocGroup, d *ast.Docum
 	extSpec := &ast.TypeExtensionSpec{
 		Doc: cdg,
 	}
-	extGen.Specs = append(extGen.Specs, extSpec)
+	extGen.Spec = extSpec
 
 	item = p.next()
 	switch item.Typ {
@@ -983,5 +983,5 @@ func (p *parser) parseExtension(item lexer.Item, cdg *ast.DocGroup, d *ast.Docum
 		p.unexpected(item, "parseExtension")
 	}
 
-	extSpec.Type = d.Types[len(d.Types)-1].Specs[0].(*ast.TypeSpec)
+	extSpec.Type = d.Types[len(d.Types)-1].Spec.(*ast.TypeSpec)
 }

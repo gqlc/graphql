@@ -30,8 +30,7 @@ func TestParseDoc(t *testing.T) {
 			return
 		}
 
-		for _, s := range doc.Imports[0].Specs {
-			is := s.(*ast.ImportSpec)
+		for _, is := range doc.Imports[0].Specs {
 			if is.Name.Name != "one" && is.Name.Name != "two" && is.Name.Name != "three" {
 				subT.Fail()
 				return
@@ -64,7 +63,7 @@ type Test {}`
 				return
 			}
 
-			if doc.Types[0].Specs[0].(*ast.TypeSpec).Name.(*ast.Ident).Name != "Test" {
+			if doc.Types[0].Spec.(*ast.TypeSpec).Name.(*ast.Ident).Name != "Test" {
 				triT.Fail()
 			}
 		})
@@ -88,7 +87,7 @@ type Test {}`
 				return
 			}
 
-			spec := doc.Schemas[0].Specs[0].(*ast.TypeSpec)
+			spec := doc.Schemas[0].Spec.(*ast.TypeSpec)
 			if len(spec.Dirs) != 3 {
 				triT.Fail()
 				return
@@ -127,7 +126,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeSpec)
 		if len(spec.Dirs) == 0 {
 			subT.Fail()
 			return
@@ -152,7 +151,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeSpec)
 		if len(spec.Dirs) == 0 {
 			subT.Fail()
 			return
@@ -182,7 +181,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeSpec)
 		if len(spec.Dirs) == 0 {
 			subT.Fail()
 			return
@@ -207,7 +206,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeSpec)
 		if len(spec.Dirs) == 0 {
 			subT.Fail()
 			return
@@ -240,7 +239,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeSpec)
 		if len(spec.Dirs) != 2 {
 			subT.Fail()
 			return
@@ -268,7 +267,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeSpec)
 		if len(spec.Dirs) != 2 {
 			subT.Fail()
 			return
@@ -293,7 +292,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeSpec)
 
 		o := spec.Type.(*ast.DirectiveType)
 		if len(o.Args.List) != 2 {
@@ -317,7 +316,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeExtensionSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeExtensionSpec)
 
 		o := spec.Type
 		if o.Type == nil {
@@ -338,7 +337,7 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Specs[0].(*ast.TypeExtensionSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeExtensionSpec)
 
 		o := spec.Type
 		if o.Name == nil {
