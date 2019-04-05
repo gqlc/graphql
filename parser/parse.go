@@ -318,7 +318,7 @@ func (p *parser) parseImport(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 		}
 		imprtGen.Specs = append(imprtGen.Specs, imprtSpec)
 
-		nitem = p.next()
+		nitem = p.peek()
 	}
 }
 
