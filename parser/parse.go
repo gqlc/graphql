@@ -562,13 +562,12 @@ func (p *parser) parseType(item lexer.Item) (e ast.Expr) {
 			Type: e,
 		}
 	case token.IDENT:
-		e = &ast.Ident{
-			NamePos: item.Pos,
-			Name:    item.Val,
-		}
+		p.pk = item
+		e = p.parseIdent("parseType")
 
-		item = p.peek()
+		item = p.next()
 		if item.Typ != token.NOT {
+			p.pk = item
 			return
 		}
 		p.pk = lexer.Item{}
@@ -584,17 +583,21 @@ func (p *parser) parseType(item lexer.Item) (e ast.Expr) {
 
 // parseIdent parses an identifier
 func (p *parser) parseIdent(context string) ast.Expr {
-	name := p.expect(token.IDENT, context)
+	p.pk = p.next()
+	if p.pk.Typ != token.IDENT {
+		return nil
+	}
 	id := &ast.Ident{
-		NamePos: name.Pos,
-		Name:    name.Val,
+		NamePos: p.pk.Pos,
+		Name:    p.pk.Val,
 	}
 
 	if p.peek().Typ != token.PERIOD {
 		return id
 	}
+	p.pk = lexer.Item{}
 
-	name = p.expect(token.IDENT, context)
+	name := p.expect(token.IDENT, context)
 	return &ast.SelectorExpr{
 		X: id,
 		Sel: &ast.Ident{
@@ -656,16 +659,18 @@ func (p *parser) parseObject(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 	if item.Typ == token.IMPLEMENTS {
 		objType.ImplPos = item.Pos
 		for {
-			item = p.peek()
-			if item.Typ != token.IDENT {
+			inter := p.parseIdent("parseObject:Interfaces")
+			if inter == nil {
 				break
 			}
 
-			objType.Impls = append(objType.Impls, &ast.Ident{NamePos: item.Pos, Name: item.Val})
+			objType.Impls = append(objType.Impls, inter)
 		}
+		item = p.next()
 	}
 
 	if item.Typ == token.AT {
+		p.pk = item
 		objSpec.Dirs, item = p.parseDirectives(dg)
 	}
 
@@ -753,11 +758,11 @@ func (p *parser) parseUnion(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 	}
 
 	for {
-		item = p.peek()
-		if item.Typ != token.IDENT {
+		mem := p.parseIdent("parseUnion:Members")
+		if mem == nil {
 			return
 		}
-		uType.Members = append(uType.Members, &ast.Ident{NamePos: item.Pos, Name: item.Val})
+		uType.Members = append(uType.Members, mem)
 	}
 }
 

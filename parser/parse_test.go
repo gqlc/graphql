@@ -134,7 +134,7 @@ type Test {}`
 	})
 
 	t.Run("object", func(subT *testing.T) {
-		obj := `type Test implements One & Two @one @two {
+		obj := `type Test implements One & Two & test.Thr @one @two {
 				one(): One @one @two
 				two(one: One): Two! @one @two
 				thr(one: One = 1, two: Two): [Thr]! @one @two
@@ -159,6 +159,11 @@ type Test {}`
 
 		o := spec.Type.(*ast.ObjectType)
 		if len(o.Fields.List) != 4 {
+			subT.Fail()
+			return
+		}
+
+		if len(o.Impls) != 3 {
 			subT.Fail()
 		}
 	})
@@ -194,7 +199,7 @@ type Test {}`
 	})
 
 	t.Run("union", func(subT *testing.T) {
-		uni := `union Test @one @two = One | Two | Three`
+		uni := `union Test @one @two = One | Two | Three | test.Four`
 		doc, err := parse("union", uni)
 		if err != nil {
 			subT.Error(err)
@@ -213,7 +218,7 @@ type Test {}`
 		}
 
 		o := spec.Type.(*ast.UnionType)
-		if len(o.Members) != 3 {
+		if len(o.Members) != 4 {
 			subT.Fail()
 		}
 	})
@@ -255,6 +260,7 @@ type Test {}`
 		inp := `input Test @one @two {
 				one: One @one
 				two: Two = 2 @one @two
+				three: test.Three @one @two @three
 			}`
 		doc, err := parse("input", inp)
 		if err != nil {
@@ -274,8 +280,20 @@ type Test {}`
 		}
 
 		o := spec.Type.(*ast.InputType)
-		if len(o.Fields.List) != 2 {
+		if len(o.Fields.List) != 3 {
 			subT.Fail()
+			return
+		}
+
+		iType := o.Fields.List[2]
+		if len(iType.Dirs) != 3 {
+			subT.Fail()
+			return
+		}
+
+		if _, ok := iType.Type.(*ast.SelectorExpr); !ok {
+			subT.Fail()
+			return
 		}
 	})
 

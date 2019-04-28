@@ -299,7 +299,7 @@ func TestLexObject(t *testing.T) {
 
 		subT.Run("perfect", func(triT *testing.T) {
 			fset := token.NewDocSet()
-			src := []byte(`type Rect implements One & Two & Three`)
+			src := []byte(`type Rect implements One & Two & Three & test.Four`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
 			expectItems(triT, l, []Item{
 				{Typ: token.TYPE, Line: 1, Pos: 1, Val: "type"},
@@ -308,6 +308,9 @@ func TestLexObject(t *testing.T) {
 				{Typ: token.IDENT, Line: 1, Pos: 22, Val: "One"},
 				{Typ: token.IDENT, Line: 1, Pos: 28, Val: "Two"},
 				{Typ: token.IDENT, Line: 1, Pos: 34, Val: "Three"},
+				{Typ: token.IDENT, Line: 1, Pos: 42, Val: "test"},
+				{Typ: token.PERIOD, Line: 1, Pos: 46, Val: "."},
+				{Typ: token.IDENT, Line: 1, Pos: 47, Val: "Four"},
 			}...)
 			expectEOF(triT, l)
 		})
