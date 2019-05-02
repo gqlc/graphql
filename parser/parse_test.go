@@ -37,6 +37,26 @@ func TestParseDoc(t *testing.T) {
 			}
 		}
 
+		subT.Run("single", func(triT *testing.T) {
+			singleImport := `import "one"`
+
+			doc, err := parse("single", singleImport)
+			if err != nil {
+				triT.Error(err)
+				return
+			}
+
+			if len(doc.Imports) == 0 {
+				triT.Fail()
+				return
+			}
+
+			if len(doc.Imports[0].Specs) != 1 {
+				triT.Fail()
+				return
+			}
+		})
+
 		subT.Run("singleWithTypeDecl", func(triT *testing.T) {
 			singleImport := `import "one"
 

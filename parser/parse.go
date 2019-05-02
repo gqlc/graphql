@@ -277,6 +277,9 @@ func (p *parser) parseImport(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 
 	for {
 		// Check for EOF or ERR
+		if nitem.Typ == token.EOF && imprtGen.Lparen == token.NoPos {
+			break
+		}
 		if nitem.Typ == token.EOF || nitem.Typ == token.ERR {
 			p.errorf("parser: unexpected token from lexer while parsing import: %s", nitem)
 		}
