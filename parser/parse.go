@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -310,7 +311,7 @@ func (p *parser) parseImport(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 		// Create import spec node and add it to the larger import gen decl
 		imprtSpec := &ast.ImportSpec{
 			Name: &ast.Ident{
-				Name:    name[:len(name)-len(filepath.Ext(name))],
+				Name:    path.Base(name),
 				NamePos: nitem.Pos,
 			},
 			Path: &ast.BasicLit{

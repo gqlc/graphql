@@ -31,7 +31,7 @@ func TestParseDoc(t *testing.T) {
 		}
 
 		for _, is := range doc.Imports[0].Specs {
-			if is.Name.Name != "one" && is.Name.Name != "two" && is.Name.Name != "three" {
+			if is.Name.Name != "one.gql" && is.Name.Name != "two.gql" && is.Name.Name != "three" {
 				subT.Fail()
 				return
 			}
