@@ -224,15 +224,21 @@ func lexDoc(l *lxr) stateFn {
 			return l.errorf("bad string syntax: %q", l.src[l.start:l.pos])
 		}
 		l.emit(token.DESCRIPTION)
+	case r == '@':
+		l.backup()
+		ok := scanDirective(l)
+		if !ok {
+			return nil
+		}
 	case isAlphaNumeric(r) && !unicode.IsDigit(r):
 		l.backup()
-		return lexImportsOrDef
+		return lexDef
 	}
 	return lexDoc
 }
 
-// lexImportsOrDef
-func lexImportsOrDef(l *lxr) stateFn {
+// lexDef
+func lexDef(l *lxr) stateFn {
 	// First, lex the identifier
 	ident := l.scanIdentifier()
 	if !ident.IsKeyword() {
@@ -256,8 +262,6 @@ func lexImportsOrDef(l *lxr) stateFn {
 	}
 
 	switch ident {
-	case token.IMPORT:
-		return lexImports
 	case token.SCALAR:
 		return lexScalar
 	case token.SCHEMA, token.TYPE, token.INTERFACE, token.ENUM, token.INPUT:
@@ -269,47 +273,10 @@ func lexImportsOrDef(l *lxr) stateFn {
 	case token.EXTEND:
 		l.acceptRun(" \t")
 		l.ignore()
-		return lexImportsOrDef
+		return lexDef
 	}
 
 	return l.errorf("unknown type definition: %v", ident)
-}
-
-// lexImports scans an import block
-func lexImports(l *lxr) stateFn {
-	// import keyword has already been emitted. expect next is '('
-	l.acceptRun(" \t")
-	l.ignore()
-
-	r := l.peek()
-	if r != '(' && r != '"' {
-		return l.errorf("missing ( or \" to begin import statement")
-	}
-
-	switch r {
-	case '"':
-		if !l.scanString() {
-			return l.errorf("malformed src string: %s", l.src[l.start:l.pos])
-		}
-		l.emit(token.STRING)
-	case '(':
-		l.accept("(")
-		l.emit(token.LPAREN)
-		ok := l.scanList(")", defListSep, 0, func(ll *lxr) bool {
-			if ll.scanString() {
-				ll.emit(token.STRING)
-				return true
-			}
-			ll.errorf("malformed import string")
-			return false
-		})
-		if !ok {
-			return nil
-		}
-		l.emit(token.RPAREN)
-	}
-
-	return lexDoc
 }
 
 // lexScalar scans a scalar type definition
@@ -706,61 +673,63 @@ func (l *lxr) scanVal() bool {
 
 // scanDirectives scans the list of directives on type defs
 func (l *lxr) scanDirectives(endChars string, sep string) bool {
-	return l.scanList(endChars, sep, 0, func(ll *lxr) bool {
-		if !ll.accept("@") {
-			l.errorf("directive must begin with an '@'")
+	return l.scanList(endChars, sep, 0, scanDirective)
+}
+
+func scanDirective(l *lxr) bool {
+	if !l.accept("@") {
+		l.errorf("directive must begin with an '@'")
+		return false
+	}
+	l.emit(token.AT)
+
+	ident := l.scanIdentifier()
+	if ident == token.ERR {
+		l.errorf("invalid directive name: %s", l.src[l.start:l.pos])
+		return false
+	}
+	l.emit(ident)
+
+	r := l.peek()
+	switch r {
+	case '(':
+		break
+	case '\n', '\r', ' ':
+		return true
+	}
+
+	if !l.accept("(") {
+		return true
+	}
+	l.emit(token.LPAREN)
+
+	ok := l.scanList(")", ",", ',', func(argsL *lxr) bool {
+		id := argsL.scanIdentifier()
+		if id == token.ERR {
+			argsL.errorf("invalid argument name: %s", argsL.src[argsL.start:argsL.pos])
 			return false
 		}
-		ll.emit(token.AT)
+		argsL.emit(id)
 
-		ident := ll.scanIdentifier()
-		if ident == token.ERR {
-			ll.errorf("invalid directive name: %s", ll.src[ll.start:ll.pos])
+		argsL.acceptRun(" \t")
+		argsL.ignore()
+
+		if !argsL.accept(":") {
+			argsL.errorf("expected ':' instead of: %s", string(argsL.src[argsL.pos]))
 			return false
 		}
-		ll.emit(ident)
+		argsL.emit(token.COLON)
 
-		r := ll.peek()
-		switch r {
-		case '(':
-			break
-		case '\n', '\r', ' ':
-			return true
-		}
+		argsL.acceptRun(" \t")
+		argsL.ignore()
 
-		if !ll.accept("(") {
-			return true
-		}
-		ll.emit(token.LPAREN)
-
-		ok := ll.scanList(")", ",", ',', func(argsL *lxr) bool {
-			id := argsL.scanIdentifier()
-			if id == token.ERR {
-				argsL.errorf("invalid argument name: %s", argsL.src[argsL.start:argsL.pos])
-				return false
-			}
-			argsL.emit(id)
-
-			argsL.acceptRun(" \t")
-			argsL.ignore()
-
-			if !argsL.accept(":") {
-				argsL.errorf("expected ':' instead of: %s", string(argsL.src[argsL.pos]))
-				return false
-			}
-			argsL.emit(token.COLON)
-
-			argsL.acceptRun(" \t")
-			argsL.ignore()
-
-			return argsL.scanValue()
-		})
-
-		if ok {
-			ll.emit(token.RPAREN)
-		}
-		return ok
+		return argsL.scanValue()
 	})
+
+	if ok {
+		l.emit(token.RPAREN)
+	}
+	return ok
 }
 
 // scanValue scans a Value

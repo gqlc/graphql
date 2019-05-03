@@ -1,0 +1,249 @@
+// This file describes a GraphQL Document in terms of Protocol Buffer messages.
+
+syntax = "proto3";
+
+option go_package = "ast";
+
+// Describes a complete GraphQL Document.
+message Document {
+    // file name, relative to root of source tree.
+    string name = 1;
+    DocGroup doc = 2;
+
+    // All top-level directives.
+    repeated DirectiveLit directives = 3;
+
+    // All top-level definitions in this file.
+    TypeDecl schema = 4; // Only allowed one schema per Document
+    repeated TypeDecl types = 5;
+}
+
+message DocGroup {
+    message Doc {
+        string text = 1;
+        int64 char = 2;
+        bool comment = 3;
+    }
+    repeated Doc list = 1;
+}
+
+// A Arg represents an Argument pair in a applied directive.
+message Arg {
+    Ident name = 1;
+
+    oneof value {
+        BasicLit blit = 2;
+        ListLit llit = 3;
+        ObjLit olit = 4;
+    }
+}
+
+// A Field represents a Field declaration in a GraphQL type declaration
+// or an argument declaration in an arguments declaration.
+//
+message Field {
+    DocGroup doc = 1; // associated documentation; or nil
+    Ident name = 2; // field/parameter names; or nil
+    FieldList args = 3; // field arguments; or nil
+
+    // field/parameter type
+    oneof type {
+        Ident ident = 4;
+        List list = 5;
+        NonNull nonNull = 6;
+    }
+
+    // parameter default value; or nil
+    oneof default {
+        BasicLit blit = 7;
+        ListLit llit = 8;
+        ObjLit olit = 9;
+    }
+
+    repeated DirectiveLit directives = 10; // directives; or nil
+}
+
+// A FieldList represents a list of Fields, enclosed by parentheses or braces.
+message FieldList {
+    int64 opening = 1; // position of opening parenthesis/brace, if any
+    repeated Field list = 2; // field list; or nil
+    int64 closing = 3; // position of closing parenthesis/brace, if any
+}
+
+// Exprs
+
+// Ident represents an identifier.
+message Ident {
+    int64 namePos = 1;
+    string name = 2;
+}
+
+// BasicLit represents a literal of basic type.
+message BasicLit {
+    int64 valuePos = 1; // literal position
+    int64 kind = 2; // token.INT, token.FLOAT, or token.STRING
+    string value = 3;
+}
+
+// TODO: ListLit represents a list literal value.
+message ListLit {}
+
+// TODO: ObjLit represents an object literal value.
+message ObjLit {}
+
+// List represents a List type.
+message List {
+    oneof type {
+        Ident ident = 1;
+        List list = 2;
+        NonNull nonNull = 3;
+    }
+}
+
+// NonNull represents an identifier with the non-null character, '!', after it.
+message NonNull {
+    oneof type {
+        Ident ident = 1;
+        List list = 2;
+    }
+}
+
+// DirectiveLit presents an applied directive
+message DirectiveLit {
+    int64 atPos = 1; // position of '@'
+    string name = 2; // name following '@'
+    CallExpr args = 3; // Any arguments; or nil
+}
+
+// DirectiveLocation represents a defined directive location in a directive declaration.
+message DirectiveLocation {
+    enum Loc {
+        NoPos = 0;
+
+        // ExecutableDirectiveLocations
+        Query = 1;
+        MUTATION = 2;
+        SUBSCRIPTION = 3;
+        FIELD = 4;
+        FRAGMENT_DEFINITION = 5;
+        FRAGMENT_SPREAD = 6;
+        INLINE_FRAGMENT = 7;
+        VARIABLE_DEFINITION = 8;
+
+        // TypeSystemDirectiveLocations
+        DOCUMENT = 9;
+        SCHEMA =  10;
+        SCALAR = 11;
+        OBJECT = 12;
+        FIELD_DEFINITION = 13;
+        ARGUMENT_DEFINITION = 14;
+        INTERFACE = 15;
+        UNION = 16;
+        ENUM = 17;
+        ENUM_VALUE = 18;
+        INPUT_OBJECT = 19;
+        INPUT_FIELD_DEFINITION = 20;
+    }
+
+    int64 start = 1;
+    Loc loc = 2;
+}
+
+// CallExpr represents an expression followed by an argument list.
+message CallExpr {
+    int64 lparen = 1; // position of '('
+    repeated Arg args = 2; // arguments; or nil
+    int64 rparen = 3; // position of ')'
+}
+
+// Types
+
+// SchemaType represents a schema type declaration.
+message SchemaType {
+    int64 schema = 1; // position of "schema" keyword
+    FieldList rootOps = 2;
+}
+
+// ScalarType represents a scalar type declaration.
+message ScalarType {
+    int64 scalar = 1; // position of "scalar" keyword
+    Ident name = 2;
+}
+// ObjectType represents an object type declaration.
+message ObjectType {
+    int64 object = 1; // position of "type" keyword
+    int64 implPos = 2; // position of "implements" keyword
+    repeated Ident interfaces = 3; // implemented interfaces; or nil
+    FieldList fields = 4;
+}
+
+// InterfaceType represents an interface type declaration.
+message InterfaceType {
+    int64 interface = 1; //position of "interface" keyword
+    FieldList fields = 2;
+}
+
+// UnionType represents a union type declaration.
+message UnionType {
+    int64 union = 1; // position of "union" keyword
+    repeated Ident members = 2;
+}
+
+// EnumType represents an enum type declaration.
+message EnumType {
+    int64 enum = 1; // position of "enum" keyword
+    FieldList values = 2;
+}
+
+// InputType represents an input type declaration.
+message InputType {
+    int64 input = 1; // position of "input" keyword
+    FieldList fields = 2;
+}
+
+// DirectiveType represents a directive type declaration.
+message DirectiveType {
+    int64 directive = 1; // position of "directive" keyword
+    FieldList args = 2; // defined args for the directive; or nil
+    int64 onPos = 3; // position of "on" keyword
+    repeated DirectiveLocation locs = 4;
+}
+
+// A TypeSpec node represents a GraphQL type declaration.
+message TypeSpec {
+    DocGroup doc = 1;
+    Ident name = 2;
+
+    oneof type {
+        SchemaType schema = 3;
+        ScalarType scalar = 4;
+        ObjectType object = 5;
+        InterfaceType interface = 6;
+        UnionType union = 7;
+        EnumType enum = 8;
+        InputType input = 9;
+        DirectiveType directive = 10;
+    }
+
+    repeated DirectiveLit directives = 11;
+}
+
+// A TypeExtensionSpec node represents a GraphQL type extension.
+message TypeExtensionSpec {
+    DocGroup doc = 1;
+    TypeSpec type = 2;
+}
+
+// Decl
+
+// TypeDecl represents a general type declaration.
+message TypeDecl {
+    DocGroup doc = 1; // associated documentation; or nil
+    int64 tokPos = 2; // position of Tok
+    int64 tok = 3; // TYPE_KEYWORD (e.g. schema, input, union)
+
+    oneof spec {
+        TypeSpec typeSpec = 4;
+        TypeExtensionSpec typeExtSpec = 5;
+    }
+}

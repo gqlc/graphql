@@ -5,142 +5,24 @@ import (
 	"testing"
 )
 
-func TestLexImports(t *testing.T) {
+func TestLexDocDirectives(t *testing.T) {
+	fset := token.NewDocSet()
+	src := []byte(`@test
 
-	t.Run("single", func(subT *testing.T) {
-
-		subT.Run("perfect", func(triT *testing.T) {
-			dset := token.NewDocSet()
-			src := []byte(`import "hello"`)
-			l := Lex(dset.AddDoc("", dset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.STRING, Line: 1, Pos: 8, Val: `"hello"`},
-			}...)
-			expectEOF(triT, l)
-		})
-
-		subT.Run("spaces", func(triT *testing.T) {
-			dset := token.NewDocSet()
-			src := []byte(`import 		    	  	 "hello"`)
-			l := Lex(dset.AddDoc("", dset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.STRING, Line: 1, Pos: 19, Val: `"hello"`},
-			}...)
-			expectEOF(triT, l)
-		})
-
-		subT.Run("noParenOrQuote", func(triT *testing.T) {
-			fset := token.NewDocSet()
-			src := []byte(`import hello"`)
-			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.ERR, Line: 1, Pos: 8, Val: `missing ( or " to begin import statement`},
-			}...)
-
-		})
-	})
-
-	t.Run("multiple", func(subT *testing.T) {
-
-		subT.Run("singleLine", func(triT *testing.T) {
-			fset := token.NewDocSet()
-			src := []byte(`import ("hello")`)
-			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.LPAREN, Line: 1, Pos: 8, Val: "("},
-				{Typ: token.STRING, Line: 1, Pos: 9, Val: `"hello"`},
-				{Typ: token.RPAREN, Line: 1, Pos: 16, Val: ")"},
-			}...)
-			expectEOF(triT, l)
-		})
-
-		subT.Run("singleLineWComma", func(triT *testing.T) {
-			fset := token.NewDocSet()
-			src := []byte(`import ( "a", "b", "c" )`)
-			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.LPAREN, Line: 1, Pos: 8, Val: "("},
-				{Typ: token.STRING, Line: 1, Pos: 10, Val: `"a"`},
-				{Typ: token.STRING, Line: 1, Pos: 15, Val: `"b"`},
-				{Typ: token.STRING, Line: 1, Pos: 20, Val: `"c"`},
-				{Typ: token.RPAREN, Line: 1, Pos: 24, Val: ")"},
-			}...)
-			expectEOF(triT, l)
-		})
-
-		subT.Run("singleLineWCommaNoEnd", func(triT *testing.T) {
-			fset := token.NewDocSet()
-			src := []byte(`import ( "a", "b", "c" `)
-			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.LPAREN, Line: 1, Pos: 8, Val: "("},
-				{Typ: token.STRING, Line: 1, Pos: 10, Val: `"a"`},
-				{Typ: token.STRING, Line: 1, Pos: 15, Val: `"b"`},
-				{Typ: token.STRING, Line: 1, Pos: 20, Val: `"c"`},
-				{Typ: token.ERR, Line: 1, Pos: 24, Val: `invalid list separator: -1`},
-			}...)
-		})
-
-		subT.Run("multiLinesWNewLine", func(triT *testing.T) {
-			fset := token.NewDocSet()
-			src := []byte(`import (
-					"a"
-					"b"
-					"c"
-				)`)
-			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.LPAREN, Line: 1, Pos: 8, Val: "("},
-				{Typ: token.STRING, Line: 2, Pos: 15, Val: `"a"`},
-				{Typ: token.STRING, Line: 3, Pos: 24, Val: `"b"`},
-				{Typ: token.STRING, Line: 4, Pos: 33, Val: `"c"`},
-				{Typ: token.RPAREN, Line: 5, Pos: 41, Val: ")"},
-			}...)
-			expectEOF(triT, l)
-		})
-
-		subT.Run("multiLinesWDiffSep1", func(triT *testing.T) {
-			fset := token.NewDocSet()
-			src := []byte(`import (
-					"a"
-					"b",
-					"c"
-				)`)
-			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.LPAREN, Line: 1, Pos: 8, Val: "("},
-				{Typ: token.STRING, Line: 2, Pos: 15, Val: `"a"`},
-				{Typ: token.STRING, Line: 3, Pos: 24, Val: `"b"`},
-				{Typ: token.ERR, Line: 3, Pos: 27, Val: `list separator must remain the same throughout the list`},
-			}...)
-		})
-
-		subT.Run("multiLinesWDiffSep2", func(triT *testing.T) {
-			fset := token.NewDocSet()
-			src := []byte(`import (
-					"a",
-					"b"
-					"c",
-				)`)
-			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
-			expectItems(triT, l, []Item{
-				{Typ: token.IMPORT, Line: 1, Pos: 1, Val: "import"},
-				{Typ: token.LPAREN, Line: 1, Pos: 8, Val: "("},
-				{Typ: token.STRING, Line: 2, Pos: 15, Val: `"a"`},
-				{Typ: token.STRING, Line: 3, Pos: 25, Val: `"b"`},
-				{Typ: token.ERR, Line: 3, Pos: 28, Val: `list separator must remain the same throughout the list`},
-			}...)
-		})
-
-	})
+@test
+scalar URI
+@test`)
+	l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
+	expectItems(t, l, []Item{
+		{Typ: token.AT, Line: 1, Pos: 1, Val: "@"},
+		{Typ: token.IDENT, Line: 1, Pos: 2, Val: "test"},
+		{Typ: token.AT, Line: 3, Pos: 8, Val: "@"},
+		{Typ: token.IDENT, Line: 3, Pos: 9, Val: "test"},
+		{Typ: token.SCALAR, Line: 4, Pos: 14, Val: "scalar"},
+		{Typ: token.IDENT, Line: 4, Pos: 21, Val: "URI"},
+		{Typ: token.AT, Line: 5, Pos: 25, Val: "@"},
+		{Typ: token.IDENT, Line: 5, Pos: 26, Val: "test"},
+	}...)
 }
 
 func TestLexScalar(t *testing.T) {

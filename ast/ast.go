@@ -7,30 +7,6 @@ import (
 	"strings"
 )
 
-// Node represents a Node in the GraphQL IDL parse tree.
-type Node interface {
-	Pos() token.Pos
-	End() token.Pos
-}
-
-// Expr represents an expression.
-type Expr interface {
-	Node
-	exprNode()
-}
-
-// Decl represents a declaration.
-type Decl interface {
-	Node
-	declNode()
-}
-
-// A Arg represents an Argument pair in a applied directive.
-type Arg struct {
-	Name  *Ident
-	Value Expr
-}
-
 // Pos returns the starting position of the argument.
 func (a *Arg) Pos() token.Pos {
 	return a.Name.Pos()
@@ -38,19 +14,15 @@ func (a *Arg) Pos() token.Pos {
 
 // End returns the ending position of the argument.
 func (a *Arg) End() token.Pos {
-	return a.Value.End()
-}
-
-// A Field represents a Field declaration in a GraphQL type declaration
-// or an argument declaration in an arguments declaration.
-//
-type Field struct {
-	Doc     *DocGroup       // associated documentation; or nil
-	Name    *Ident          // field/parameter names; or nil
-	Args    *FieldList      // field arguments; or nil
-	Type    Expr            // field/parameter type
-	Default Expr            // parameter default value; or nil
-	Dirs    []*DirectiveLit // directives; or nil
+	switch v := a.Value.(type) {
+	case *Arg_Blit:
+		return v.Blit.End()
+	case *Arg_Llit:
+		return v.Llit.End()
+	case *Arg_Olit:
+		return v.Olit.End()
+	}
+	return token.NoPos
 }
 
 // Pos returns the starting position of the field.
@@ -58,28 +30,38 @@ func (f *Field) Pos() token.Pos {
 	if f.Name != nil {
 		return f.Name.Pos()
 	}
-	return f.Type.Pos()
+
+	switch v := f.Type.(type) {
+	case *Field_Ident:
+		return v.Ident.Pos()
+	case *Field_List:
+		return v.List.Pos()
+	case *Field_NonNull:
+		return v.NonNull.Pos()
+	}
+	return token.NoPos
 }
 
 // End returns the ending position of the field.
 func (f *Field) End() token.Pos {
-	if f.Dirs != nil {
-		return f.Dirs[0].End()
+	if f.Directives != nil {
+		return f.Directives[0].End()
 	}
-	return f.Type.End()
-}
-
-// A FieldList represents a list of Fields, enclosed by parentheses or braces.
-type FieldList struct {
-	Opening token.Pos // position of opening parenthesis/brace, if any
-	List    []*Field  // field list; or nil
-	Closing token.Pos // position of closing parenthesis/brace, if any
+	switch v := f.Type.(type) {
+	case *Field_Ident:
+		return v.Ident.End()
+	case *Field_List:
+		return v.List.End()
+	case *Field_NonNull:
+		return v.NonNull.End()
+	}
+	return token.NoPos
 }
 
 // Pos returns the starting position of the field list.
 func (f *FieldList) Pos() token.Pos {
-	if f.Opening.IsValid() {
-		return f.Opening
+	if openPos := token.Pos(f.Opening); openPos.IsValid() {
+		return openPos
 	}
 	// the list should not be empty in this case;
 	// be conservative and guard against bad ASTs
@@ -91,8 +73,8 @@ func (f *FieldList) Pos() token.Pos {
 
 // End returns the ending position of the field list.
 func (f *FieldList) End() token.Pos {
-	if f.Closing.IsValid() {
-		return f.Closing + 1
+	if closePos := token.Pos(f.Closing); closePos.IsValid() {
+		return closePos + 1
 	}
 	// the list should not be empty in this case;
 	// be conservative and guard against bad ASTs
@@ -110,385 +92,126 @@ func (f *FieldList) NumFields() (n int) {
 	return
 }
 
-// Loc represents one of the allowed directive locations.
-type Loc uint
-
-// DirectiveLocations
-const (
-	// ExecutableDirectiveLocations
-
-	QUERY Loc = iota
-	MUTATION
-	SUBSCRIPTION
-	FIELD
-	FRAGMENT_DEFINITION
-	FRAGMENT_SPREAD
-	INLINE_FRAGMENT
-	VARIABLE_DEFINITION
-
-	// TypeSystemDirectiveLocations
-
-	SCHEMA
-	SCALAR
-	OBJECT
-	FIELD_DEFINITION
-	ARGUMENT_DEFINITION
-	INTERFACE
-	UNION
-	ENUM
-	ENUM_VALUE
-	INPUT_OBJECT
-	INPUT_FIELD_DEFINITION
-)
-
-var locs = map[string]Loc{
-	"QUERY":                  QUERY,
-	"MUTATION":               MUTATION,
-	"SUBSCRIPTION":           SUBSCRIPTION,
-	"FIELD":                  FIELD,
-	"FRAGMENT_DEFINITION":    FRAGMENT_DEFINITION,
-	"FRAGMENT_SPREAD":        FRAGMENT_SPREAD,
-	"INLINE_FRAGMENT":        INLINE_FRAGMENT,
-	"VARIABLE_DEFINITION":    VARIABLE_DEFINITION,
-	"SCHEMA":                 SCHEMA,
-	"SCALAR":                 SCALAR,
-	"OBJECT":                 OBJECT,
-	"FIELD_DEFINITION":       FIELD_DEFINITION,
-	"ARGUMENT_DEFINITION":    ARGUMENT_DEFINITION,
-	"INTERFACE":              INTERFACE,
-	"UNION":                  UNION,
-	"ENUM":                   ENUM,
-	"ENUM_VALUE":             ENUM_VALUE,
-	"INPUT_OBJECT":           INPUT_OBJECT,
-	"INPUT_FIELD_DEFINITION": INPUT_FIELD_DEFINITION,
-}
-
 // IsValidLoc returns whether or not a given string represents a valid directive location.
-func IsValidLoc(l string) (loc Loc, ok bool) {
-	loc, ok = locs[l]
-	return
+func IsValidLoc(l string) (DirectiveLocation_Loc, bool) {
+	iLoc, ok := DirectiveLocation_Loc_value[l]
+	return DirectiveLocation_Loc(iLoc), ok
 }
 
-// String returns the string representation of a Loc.
-func (l Loc) String() (s string) {
-	for k, v := range locs {
-		if v == l {
-			s = k
-			break
-		}
+func (x *Ident) Pos() token.Pos    { return token.Pos(x.NamePos) }
+func (x *BasicLit) Pos() token.Pos { return token.Pos(x.ValuePos) }
+func (x *ListLit) Pos() token.Pos  { return 0 } // TODO
+func (x *ObjLit) Pos() token.Pos   { return 0 } // TODO
+func (x *List) Pos() token.Pos {
+	switch v := x.Type.(type) {
+	case *List_Ident:
+		return v.Ident.Pos() - 1
+	case *List_List:
+		return v.List.Pos() - 1
+	case *List_NonNull:
+		return v.NonNull.Pos() - 1
 	}
-	return
+	return token.NoPos
 }
-
-// An expression is represented by a tree consisting of one
-// or more of the following concrete expression nodes.
-//
-type (
-	// BadExpr is a placeholder for expressions containing
-	// syntax errors for which no correct expression nodes can be
-	// created.
-	BadExpr struct {
-		From, To token.Pos
+func (x *NonNull) Pos() token.Pos {
+	switch v := x.Type.(type) {
+	case *NonNull_Ident:
+		return v.Ident.Pos() - 1
+	case *NonNull_List:
+		return v.List.Pos() - 1
 	}
+	return token.NoPos
+}
+func (x *DirectiveLit) Pos() token.Pos      { return token.Pos(x.AtPos) }
+func (x *DirectiveLocation) Pos() token.Pos { return token.Pos(x.Start) }
+func (x *SchemaType) Pos() token.Pos        { return token.Pos(x.Schema) }
+func (x *ScalarType) Pos() token.Pos        { return token.Pos(x.Scalar) }
+func (x *ObjectType) Pos() token.Pos        { return token.Pos(x.Object) }
+func (x *InterfaceType) Pos() token.Pos     { return token.Pos(x.Interface) }
+func (x *UnionType) Pos() token.Pos         { return token.Pos(x.Union) }
+func (x *EnumType) Pos() token.Pos          { return token.Pos(x.Enum) }
+func (x *InputType) Pos() token.Pos         { return token.Pos(x.Input) }
+func (x *DirectiveType) Pos() token.Pos     { return token.Pos(x.Directive) }
 
-	// Ident represents an identifier.
-	Ident struct {
-		NamePos token.Pos
-		Name    string
+func (x *Ident) End() token.Pos    { return token.Pos(int(x.NamePos) + len(x.Name)) }
+func (x *BasicLit) End() token.Pos { return token.Pos(x.ValuePos) + token.Pos(len(x.Value)) }
+func (x *ListLit) End() token.Pos  { return 0 } // TODO
+func (x *ObjLit) End() token.Pos   { return 0 } // TODO
+func (x *List) End() token.Pos {
+	switch v := x.Type.(type) {
+	case *List_Ident:
+		return v.Ident.End() + 1
+	case *List_List:
+		return v.List.End() + 1
+	case *List_NonNull:
+		return v.NonNull.End() + 1
 	}
-
-	// A SelectorExpr node represents an expression followed by a selector.
-	SelectorExpr struct {
-		X   Expr   // expression
-		Sel *Ident // field selector
+	return token.NoPos
+}
+func (x *NonNull) End() token.Pos {
+	switch v := x.Type.(type) {
+	case *NonNull_Ident:
+		return v.Ident.End() + 1
+	case *NonNull_List:
+		return v.List.End() + 1
 	}
-
-	// BasicLit represents a literal of basic type.
-	BasicLit struct {
-		ValuePos token.Pos   // literal position
-		Kind     token.Token // token.INT, token.FLOAT, or token.STRING
-		Value    string
-	}
-
-	// List represents a List type.
-	List struct {
-		Type Expr
-	}
-
-	// ListLit represents a list literal value.
-	ListLit struct{}
-
-	// ObjLit represents an object literal value.
-	ObjLit struct{}
-
-	// NonNull represents an identifier with the non-null character, '!', after it.
-	NonNull struct {
-		Type Expr
-	}
-
-	// DirectiveLit presents an applied directive
-	DirectiveLit struct {
-		AtPos token.Pos // position of '@'
-		Name  string    // name following '@'
-		Args  *CallExpr // Any arguments; or nil
-	}
-
-	// DirectiveLocation represents a defined directive location in a directive declaration.
-	DirectiveLocation struct {
-		Start token.Pos
-		Loc   Loc
-	}
-
-	// CallExpr represents an expression followed by an argument list.
-	CallExpr struct {
-		Lparen token.Pos // position of '('
-		Args   []*Arg    // arguments; or nil
-		Rparen token.Pos // position of ')'
-	}
-)
-
-// A type is represented by a tree consisting of one
-// or more of the following type-specific expression
-// nodes.
-//
-type (
-	// ImportedType represents an imported type.
-	ImportedType struct {
-		Namespace string // where it's imported from
-		Spec      Spec   // imported type spec
-	}
-
-	// SchemaType represents a schema type declaration.
-	SchemaType struct {
-		Schema token.Pos // position of "schema" keyword
-		Fields *FieldList
-	}
-
-	// ScalarType represents a scalar type declaration.
-	ScalarType struct {
-		Scalar token.Pos // position of "scalar" keyword
-		Name   Expr
-	}
-
-	// ObjectType represents an object type declaration.
-	ObjectType struct {
-		Object  token.Pos // position of "type" keyword
-		ImplPos token.Pos // position of "implements" keyword
-		Impls   []Expr    // implemented interfaces; or nil
-		Fields  *FieldList
-	}
-
-	// InterfaceType represents an interface type declaration.
-	InterfaceType struct {
-		Interface token.Pos // position of "interface" keyword
-		Fields    *FieldList
-	}
-
-	// UnionType represents a union type declaration.
-	UnionType struct {
-		Union   token.Pos // position of "union" keyword
-		Members []Expr
-	}
-
-	// EnumType represents an enum type declaration.
-	EnumType struct {
-		Enum   token.Pos // position of "enum" keyword
-		Fields *FieldList
-	}
-
-	// InputType represents an input type declaration.
-	InputType struct {
-		Input  token.Pos // position of "input" keyword
-		Fields *FieldList
-	}
-
-	// DirectiveType represents a directive type declaration.
-	DirectiveType struct {
-		Directive token.Pos            // position of "directive" keyword
-		Args      *FieldList           // defined args for the directive; or nil
-		OnPos     token.Pos            // position of "on" keyword
-		Locs      []*DirectiveLocation // valid locations where this directive can be applied
-	}
-)
-
-func (x *BadExpr) Pos() token.Pos           { return x.From }
-func (x *Ident) Pos() token.Pos             { return x.NamePos }
-func (x *SelectorExpr) Pos() token.Pos      { return x.X.Pos() }
-func (x *BasicLit) Pos() token.Pos          { return x.ValuePos }
-func (x *ListLit) Pos() token.Pos           { return 0 } // TODO
-func (x *ObjLit) Pos() token.Pos            { return 0 } // TODO
-func (x *List) Pos() token.Pos              { return x.Type.Pos() - 1 }
-func (x *NonNull) Pos() token.Pos           { return x.Type.Pos() }
-func (x *DirectiveLit) Pos() token.Pos      { return x.AtPos }
-func (x *DirectiveLocation) Pos() token.Pos { return x.Start }
-func (x *ImportedType) Pos() token.Pos      { return x.Spec.Pos() }
-func (x *SchemaType) Pos() token.Pos        { return x.Schema }
-func (x *ScalarType) Pos() token.Pos        { return x.Scalar }
-func (x *ObjectType) Pos() token.Pos        { return x.Object }
-func (x *InterfaceType) Pos() token.Pos     { return x.Interface }
-func (x *UnionType) Pos() token.Pos         { return x.Union }
-func (x *EnumType) Pos() token.Pos          { return x.Enum }
-func (x *InputType) Pos() token.Pos         { return x.Input }
-func (x *DirectiveType) Pos() token.Pos     { return x.Directive }
-
-func (x *BadExpr) End() token.Pos      { return x.To }
-func (x *Ident) End() token.Pos        { return token.Pos(int(x.NamePos) + len(x.Name)) }
-func (x *SelectorExpr) End() token.Pos { return x.Sel.End() }
-func (x *BasicLit) End() token.Pos     { return x.ValuePos + token.Pos(len(x.Value)) }
-func (x *ListLit) End() token.Pos      { return 0 } // TODO
-func (x *ObjLit) End() token.Pos       { return 0 } // TODO
-func (x *List) End() token.Pos         { return x.Type.End() + 1 }
-func (x *NonNull) End() token.Pos      { return x.Type.End() + 1 }
+	return token.NoPos
+}
 func (x *DirectiveLit) End() token.Pos {
 	if x.Args == nil {
-		return x.AtPos + token.Pos(len(x.Name))
+		return token.Pos(x.AtPos) + token.Pos(len(x.Name))
 	}
-	return x.Args.Rparen
+	return token.Pos(x.Args.Rparen)
 }
 func (x *DirectiveLocation) End() token.Pos {
-	for k, v := range locs {
-		if v == x.Loc {
-			return x.Start + token.Pos(len(k))
+	for k, v := range DirectiveLocation_Loc_value {
+		if DirectiveLocation_Loc(v) == x.Loc {
+			return token.Pos(x.Start) + token.Pos(len(k))
 		}
 	}
 	return token.NoPos
 }
-func (x *ImportedType) End() token.Pos  { return x.Spec.End() }
-func (x *SchemaType) End() token.Pos    { return x.Fields.End() }
+func (x *SchemaType) End() token.Pos    { return x.RootOps.End() }
 func (x *ScalarType) End() token.Pos    { return token.NoPos }
 func (x *ObjectType) End() token.Pos    { return x.Fields.End() }
 func (x *InterfaceType) End() token.Pos { return x.Fields.End() }
 func (x *UnionType) End() token.Pos     { return x.Members[0].End() }
-func (x *EnumType) End() token.Pos      { return x.Fields.End() }
+func (x *EnumType) End() token.Pos      { return x.Values.End() }
 func (x *InputType) End() token.Pos     { return x.Fields.End() }
 func (x *DirectiveType) End() token.Pos { return x.Locs[len(x.Locs)-1].End() }
 
-func (*BadExpr) exprNode()           {}
-func (*Ident) exprNode()             {}
-func (*SelectorExpr) exprNode()      {}
-func (*BasicLit) exprNode()          {}
-func (*ListLit) exprNode()           {}
-func (*ObjLit) exprNode()            {}
-func (*List) exprNode()              {}
-func (*NonNull) exprNode()           {}
-func (*DirectiveLit) exprNode()      {}
-func (*DirectiveLocation) exprNode() {}
-func (*ImportedType) exprNode()      {}
-func (*SchemaType) exprNode()        {}
-func (*ScalarType) exprNode()        {}
-func (*ObjectType) exprNode()        {}
-func (*InterfaceType) exprNode()     {}
-func (*UnionType) exprNode()         {}
-func (*EnumType) exprNode()          {}
-func (*InputType) exprNode()         {}
-func (*DirectiveType) exprNode()     {}
-
-type (
-	// The Spec type stands for any of *ImportSpec, and *TypeSpec
-	Spec interface {
-		Node
-		specNode()
-	}
-
-	// An ImportSpec node represents a single document import.
-	ImportSpec struct {
-		Doc    *DocGroup // associated documentation; or nil
-		Name   *Ident    // local import name (including "."); or nil
-		Path   *BasicLit // import path
-		EndPos token.Pos // end of spec (overrides Path.Pos if nonzero)
-	}
-
-	// A TypeSpec node represents a GraphQL type declaration.
-	TypeSpec struct {
-		Doc  *DocGroup       // associated documentation; or nil
-		Name Expr            // type name; or nil
-		Dirs []*DirectiveLit // applied directives; or nil
-		Type Expr            // *Ident, or any of the *XxxTypes
-	}
-
-	// A TypeExtensionSpec node represents a GraphQL type extension.
-	TypeExtensionSpec struct {
-		Doc  *DocGroup
-		Type *TypeSpec
-	}
-)
-
 // Pos and End implementations for spec nodes.
 
-func (s *ImportSpec) Pos() token.Pos {
-	if s.Name != nil {
-		return s.Name.Pos()
-	}
-	return s.Path.Pos()
-}
 func (s *TypeSpec) Pos() token.Pos          { return s.Name.Pos() }
 func (s *TypeExtensionSpec) Pos() token.Pos { return s.Type.Pos() }
 
-func (s *ImportSpec) End() token.Pos {
-	if s.EndPos != 0 {
-		return s.EndPos
+func (s *TypeSpec) End() (e token.Pos) {
+	switch v := s.Type.(type) {
+	case *TypeSpec_Schema:
+		e = v.Schema.End()
+	case *TypeSpec_Scalar:
+		e = v.Scalar.End()
+	case *TypeSpec_Object:
+		e = v.Object.End()
+	case *TypeSpec_Interface:
+		e = v.Interface.End()
+	case *TypeSpec_Union:
+		e = v.Union.End()
+	case *TypeSpec_Enum:
+		e = v.Enum.End()
+	case *TypeSpec_Input:
+		e = v.Input.End()
+	case *TypeSpec_Directive:
+		e = v.Directive.End()
 	}
-	return s.Path.End()
-}
-func (s *TypeSpec) End() token.Pos {
-	e := s.Type.End()
 	if e == token.NoPos {
-		return s.Name.End()
+		e = s.Name.End()
 	}
-	return e
+	return
 }
 func (s *TypeExtensionSpec) End() token.Pos {
 	return s.Type.End()
 }
-
-// specNode() ensures that only spec nodes can be
-// assigned to a Spec.
-//
-func (*ImportSpec) specNode()        {}
-func (*TypeSpec) specNode()          {}
-func (*TypeExtensionSpec) specNode() {}
-
-type (
-	// BadDecl represents a malformed declaration.
-	BadDecl struct {
-		From, To token.Pos
-	}
-
-	// GenDecl represents a general type declaration.
-	GenDecl struct {
-		Doc    *DocGroup   // associated documentation; or nil
-		TokPos token.Pos   // position of Tok
-		Tok    token.Token // TYPE_KEYWORD (e.g. schema, input, union)
-		Spec   Spec
-	}
-
-	// ImportDecl represents an import declaration.
-	ImportDecl struct {
-		Doc    *DocGroup   // associated documentation; or nil
-		TokPos token.Pos   // position of Tok
-		Tok    token.Token // IMPORT
-		Lparen token.Pos   // position of '(', if any
-		Specs  []*ImportSpec
-		Rparen token.Pos // position of ')', if any
-	}
-)
-
-func (d *BadDecl) Pos() token.Pos    { return d.From }
-func (d *GenDecl) Pos() token.Pos    { return d.TokPos }
-func (d *ImportDecl) Pos() token.Pos { return d.TokPos }
-
-func (d *BadDecl) End() token.Pos { return d.To }
-func (d *GenDecl) End() token.Pos { return d.Spec.End() }
-func (d *ImportDecl) End() token.Pos {
-	if d.Rparen.IsValid() {
-		return d.Rparen + 1
-	}
-	return d.Specs[0].End()
-}
-
-func (*BadDecl) declNode()    {}
-func (*GenDecl) declNode()    {}
-func (*ImportDecl) declNode() {}
 
 // Doc represents a single line documentation source i.e. Description or Comment.
 //
@@ -505,23 +228,6 @@ type Doc struct {
 
 // IsComment reports whether the documentation is a comment or not.
 func (d *Doc) IsComment() bool { return d.Comment }
-
-// DocGroup represents a sequence of docs
-// with no other tokens and no empty lines between.
-//
-type DocGroup struct {
-	List []*Doc // len(List) > 0
-}
-
-func isWhitespace(ch byte) bool { return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' }
-
-func stripTrailingWhitespace(s string) string {
-	i := len(s)
-	for i > 0 && isWhitespace(s[i-1]) {
-		i--
-	}
-	return s[0:i]
-}
 
 // Text returns the text of the comment.
 // Documentation markers (#, ", """), the first space of a line comment, and
@@ -582,14 +288,12 @@ func (x *DocGroup) Text() string {
 	return strings.Join(lines, "\n")
 }
 
-// Document represents a single parsed GraphQL Document.
-type Document struct {
-	Name string    // document name, relative to root of source tree
-	Doc  *DocGroup // associated documentation
+func isWhitespace(ch byte) bool { return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' }
 
-	// Names of documents imported by this document; or nil
-	Imports []*ImportDecl
-
-	Schemas []*GenDecl // Convenient shortcut for accessing schemas; or nil
-	Types   []*GenDecl // All top-level type declarations in doc; or nil
+func stripTrailingWhitespace(s string) string {
+	i := len(s)
+	for i > 0 && isWhitespace(s[i-1]) {
+		i--
+	}
+	return s[0:i]
 }

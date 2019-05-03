@@ -8,91 +8,11 @@ import (
 )
 
 func TestParseDoc(t *testing.T) {
-	t.Run("imports", func(subT *testing.T) {
-		justImports := `import (
-	"one.gql"
-	"two.gql"
-	"three"
-)`
-		doc, err := parse("justImports", justImports)
-		if err != nil {
-			subT.Error(err)
-			return
-		}
-
-		if len(doc.Imports) == 0 {
-			subT.Fail()
-			return
-		}
-
-		if len(doc.Imports[0].Specs) != 3 {
-			subT.Fail()
-			return
-		}
-
-		for _, is := range doc.Imports[0].Specs {
-			if is.Name.Name != "one.gql" && is.Name.Name != "two.gql" && is.Name.Name != "three" {
-				subT.Fail()
-				return
-			}
-		}
-
-		subT.Run("single", func(triT *testing.T) {
-			singleImport := `import "one"`
-
-			doc, err := parse("single", singleImport)
-			if err != nil {
-				triT.Error(err)
-				return
-			}
-
-			if len(doc.Imports) == 0 {
-				triT.Fail()
-				return
-			}
-
-			if len(doc.Imports[0].Specs) != 1 {
-				triT.Fail()
-				return
-			}
-		})
-
-		subT.Run("singleWithTypeDecl", func(triT *testing.T) {
-			singleImport := `import "one"
-
-type Test {}`
-
-			doc, err := parse("singleWithTypeDecl", singleImport)
-			if err != nil {
-				triT.Error(err)
-				return
-			}
-
-			if len(doc.Imports) == 0 {
-				triT.Fail()
-				return
-			}
-
-			if len(doc.Imports[0].Specs) != 1 {
-				triT.Fail()
-				return
-			}
-
-			if len(doc.Types) != 1 {
-				triT.Fail()
-				return
-			}
-
-			if doc.Types[0].Spec.(*ast.TypeSpec).Name.(*ast.Ident).Name != "Test" {
-				triT.Fail()
-			}
-		})
-	})
 
 	t.Run("schema", func(subT *testing.T) {
 		subT.Run("perfect", func(triT *testing.T) {
 			schema := `schema @one @two() @three(a: "A") {
-	query: Query!
+	query: Query
 	mutation: Mutation
 	subscription: Subscription
 }`
@@ -102,19 +22,19 @@ type Test {}`
 				return
 			}
 
-			if len(doc.Schemas) == 0 {
+			if doc.Schema == nil {
 				triT.Fail()
 				return
 			}
 
-			spec := doc.Schemas[0].Spec.(*ast.TypeSpec)
-			if len(spec.Dirs) != 3 {
+			spec := doc.Schema.Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+			if len(spec.Directives) != 3 {
 				triT.Fail()
 				return
 			}
 
-			s := spec.Type.(*ast.SchemaType)
-			if len(s.Fields.List) != 3 {
+			s := spec.Type.(*ast.TypeSpec_Schema).Schema
+			if len(s.RootOps.List) != 3 {
 				triT.Fail()
 				return
 			}
@@ -146,15 +66,15 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Spec.(*ast.TypeSpec)
-		if len(spec.Dirs) == 0 {
+		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+		if len(spec.Directives) == 0 {
 			subT.Fail()
 			return
 		}
 	})
 
 	t.Run("object", func(subT *testing.T) {
-		obj := `type Test implements One & Two & test.Thr @one @two {
+		obj := `type Test implements One & Two & Thr @one @two {
 				one(): One @one @two
 				two(one: One): Two! @one @two
 				thr(one: One = 1, two: Two): [Thr]! @one @two
@@ -171,19 +91,19 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Spec.(*ast.TypeSpec)
-		if len(spec.Dirs) == 0 {
+		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+		if len(spec.Directives) == 0 {
 			subT.Fail()
 			return
 		}
 
-		o := spec.Type.(*ast.ObjectType)
+		o := spec.Type.(*ast.TypeSpec_Object).Object
 		if len(o.Fields.List) != 4 {
 			subT.Fail()
 			return
 		}
 
-		if len(o.Impls) != 3 {
+		if len(o.Interfaces) != 3 {
 			subT.Fail()
 		}
 	})
@@ -206,20 +126,20 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Spec.(*ast.TypeSpec)
-		if len(spec.Dirs) == 0 {
+		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+		if len(spec.Directives) == 0 {
 			subT.Fail()
 			return
 		}
 
-		o := spec.Type.(*ast.InterfaceType)
+		o := spec.Type.(*ast.TypeSpec_Interface).Interface
 		if len(o.Fields.List) != 4 {
 			subT.Fail()
 		}
 	})
 
 	t.Run("union", func(subT *testing.T) {
-		uni := `union Test @one @two = One | Two | Three | test.Four`
+		uni := `union Test @one @two = One | Two | Three | Four`
 		doc, err := parse("union", uni)
 		if err != nil {
 			subT.Error(err)
@@ -231,13 +151,13 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Spec.(*ast.TypeSpec)
-		if len(spec.Dirs) == 0 {
+		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+		if len(spec.Directives) == 0 {
 			subT.Fail()
 			return
 		}
 
-		o := spec.Type.(*ast.UnionType)
+		o := spec.Type.(*ast.TypeSpec_Union).Union
 		if len(o.Members) != 4 {
 			subT.Fail()
 		}
@@ -264,14 +184,14 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Spec.(*ast.TypeSpec)
-		if len(spec.Dirs) != 2 {
+		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+		if len(spec.Directives) != 2 {
 			subT.Fail()
 			return
 		}
 
-		o := spec.Type.(*ast.EnumType)
-		if len(o.Fields.List) != 3 {
+		o := spec.Type.(*ast.TypeSpec_Enum).Enum
+		if len(o.Values.List) != 3 {
 			subT.Fail()
 		}
 	})
@@ -280,7 +200,7 @@ type Test {}`
 		inp := `input Test @one @two {
 				one: One @one
 				two: Two = 2 @one @two
-				three: test.Three @one @two @three
+				three: Three @one @two @three
 			}`
 		doc, err := parse("input", inp)
 		if err != nil {
@@ -293,25 +213,20 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Spec.(*ast.TypeSpec)
-		if len(spec.Dirs) != 2 {
+		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+		if len(spec.Directives) != 2 {
 			subT.Fail()
 			return
 		}
 
-		o := spec.Type.(*ast.InputType)
+		o := spec.Type.(*ast.TypeSpec_Input).Input
 		if len(o.Fields.List) != 3 {
 			subT.Fail()
 			return
 		}
 
 		iType := o.Fields.List[2]
-		if len(iType.Dirs) != 3 {
-			subT.Fail()
-			return
-		}
-
-		if _, ok := iType.Type.(*ast.SelectorExpr); !ok {
+		if len(iType.Directives) != 3 {
 			subT.Fail()
 			return
 		}
@@ -330,9 +245,9 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Spec.(*ast.TypeSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
 
-		o := spec.Type.(*ast.DirectiveType)
+		o := spec.Type.(*ast.TypeSpec_Directive).Directive
 		if len(o.Args.List) != 2 {
 			subT.Fail()
 		}
@@ -354,38 +269,17 @@ type Test {}`
 			return
 		}
 
-		spec := doc.Types[0].Spec.(*ast.TypeExtensionSpec)
+		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeExtSpec).TypeExtSpec
 
 		o := spec.Type
 		if o.Type == nil {
 			subT.Fail()
-		}
-	})
-
-	t.Run("importIdent", func(subT *testing.T) {
-		ex := `extend type one.Test @one`
-		doc, err := parse("extension", ex)
-		if err != nil {
-			subT.Error(err)
 			return
 		}
 
-		if len(doc.Types) == 0 {
+		if len(o.Directives) != 1 {
 			subT.Fail()
 			return
-		}
-
-		spec := doc.Types[0].Spec.(*ast.TypeExtensionSpec)
-
-		o := spec.Type
-		if o.Name == nil {
-			subT.Fail()
-			return
-		}
-
-		name := o.Name.(*ast.SelectorExpr)
-		if name.X.(*ast.Ident).Name != "one" || name.Sel.Name != "Test" {
-			subT.Fail()
 		}
 	})
 }
