@@ -233,7 +233,8 @@ func (p *parser) parseDoc(dg *ast.DocGroup, d *ast.Document) {
 		p.unexpected(item, "parseDoc")
 	case token.EOF:
 		return
-	case token.AT: // TODO
+	case token.AT:
+		p.parseDirectiveLit(cdg, item, &d.Directives)
 	case token.SCHEMA:
 		p.parseSchema(item, cdg, d)
 	case token.SCALAR:
@@ -327,33 +328,37 @@ func (p *parser) parseSchema(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 
 // parseDirectives parses a list of applied directives
 func (p *parser) parseDirectives(dg *ast.DocGroup) (dirs []*ast.DirectiveLit, item lexer.Item) {
-	item = p.next()
 	for {
+		item = p.next()
 		if item.Typ != token.AT {
 			return
 		}
-		dir := &ast.DirectiveLit{
-			AtPos: int64(item.Pos),
-		}
-		dirs = append(dirs, dir)
 
-		item = p.expect(token.IDENT, "parseDirectives")
-		dir.Name = item.Val
+		p.parseDirectiveLit(dg, item, &dirs)
+	}
+}
 
-		item = p.next()
-		if item.Typ != token.LPAREN {
-			continue
-		}
+func (p *parser) parseDirectiveLit(dg *ast.DocGroup, item lexer.Item, dirs *[]*ast.DirectiveLit) {
+	dir := &ast.DirectiveLit{
+		AtPos: int64(item.Pos),
+	}
+	*dirs = append(*dirs, dir)
 
-		args, rpos := p.parseArgs(dg)
+	item = p.expect(token.IDENT, "parseDirectives")
+	dir.Name = item.Val
 
-		dir.Args = &ast.CallExpr{
-			Lparen: int64(item.Pos),
-			Args:   args,
-			Rparen: int64(rpos),
-		}
+	item = p.next()
+	if item.Typ != token.LPAREN {
+		p.pk = item
+		return
+	}
 
-		item = p.next()
+	args, rpos := p.parseArgs(dg)
+
+	dir.Args = &ast.CallExpr{
+		Lparen: int64(item.Pos),
+		Args:   args,
+		Rparen: int64(rpos),
 	}
 }
 

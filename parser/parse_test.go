@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/gqlc/graphql/ast"
 	"github.com/gqlc/graphql/token"
 	"strings"
@@ -8,6 +9,20 @@ import (
 )
 
 func TestParseDoc(t *testing.T) {
+
+	t.Run("topLvlDirectives", func(subT *testing.T) {
+		topLvlDirectives := `@test(one: 1, two: 2, thr: 3)`
+		doc, err := parse("topLvlDirectives", topLvlDirectives)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Directives) != 1 {
+			subT.Fail()
+			return
+		}
+	})
 
 	t.Run("schema", func(subT *testing.T) {
 		subT.Run("perfect", func(triT *testing.T) {
@@ -98,6 +113,7 @@ func TestParseDoc(t *testing.T) {
 		}
 
 		o := spec.Type.(*ast.TypeSpec_Object).Object
+		fmt.Println(o)
 		if len(o.Fields.List) != 4 {
 			subT.Fail()
 			return
