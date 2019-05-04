@@ -15,12 +15,10 @@ func (a *Arg) Pos() token.Pos {
 // End returns the ending position of the argument.
 func (a *Arg) End() token.Pos {
 	switch v := a.Value.(type) {
-	case *Arg_Blit:
-		return v.Blit.End()
-	case *Arg_Llit:
-		return v.Llit.End()
-	case *Arg_Olit:
-		return v.Olit.End()
+	case *Arg_BasicLit:
+		return v.BasicLit.End()
+	case *Arg_CompositeLit:
+		return v.CompositeLit.End()
 	}
 	return token.NoPos
 }
@@ -98,10 +96,11 @@ func IsValidLoc(l string) (DirectiveLocation_Loc, bool) {
 	return DirectiveLocation_Loc(iLoc), ok
 }
 
-func (x *Ident) Pos() token.Pos    { return token.Pos(x.NamePos) }
-func (x *BasicLit) Pos() token.Pos { return token.Pos(x.ValuePos) }
-func (x *ListLit) Pos() token.Pos  { return 0 } // TODO
-func (x *ObjLit) Pos() token.Pos   { return 0 } // TODO
+func (x *Ident) Pos() token.Pos        { return token.Pos(x.NamePos) }
+func (x *BasicLit) Pos() token.Pos     { return token.Pos(x.ValuePos) }
+func (x *CompositeLit) Pos() token.Pos { return token.Pos(x.Opening) }
+func (x *ListLit) Pos() token.Pos      { return token.NoPos }
+func (x *ObjLit) Pos() token.Pos       { return token.NoPos }
 func (x *List) Pos() token.Pos {
 	switch v := x.Type.(type) {
 	case *List_Ident:
@@ -133,10 +132,11 @@ func (x *EnumType) Pos() token.Pos          { return token.Pos(x.Enum) }
 func (x *InputType) Pos() token.Pos         { return token.Pos(x.Input) }
 func (x *DirectiveType) Pos() token.Pos     { return token.Pos(x.Directive) }
 
-func (x *Ident) End() token.Pos    { return token.Pos(int(x.NamePos) + len(x.Name)) }
-func (x *BasicLit) End() token.Pos { return token.Pos(x.ValuePos) + token.Pos(len(x.Value)) }
-func (x *ListLit) End() token.Pos  { return 0 } // TODO
-func (x *ObjLit) End() token.Pos   { return 0 } // TODO
+func (x *Ident) End() token.Pos        { return token.Pos(int(x.NamePos) + len(x.Name)) }
+func (x *BasicLit) End() token.Pos     { return token.Pos(x.ValuePos) + token.Pos(len(x.Value)) }
+func (x *CompositeLit) End() token.Pos { return token.Pos(x.Closing) }
+func (x *ListLit) End() token.Pos      { return token.NoPos }
+func (x *ObjLit) End() token.Pos       { return token.NoPos }
 func (x *List) End() token.Pos {
 	switch v := x.Type.(type) {
 	case *List_Ident:

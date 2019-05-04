@@ -384,54 +384,126 @@ func (p *parser) parseArgs(pdg *ast.DocGroup) (args []*ast.Arg, rpos token.Pos) 
 
 		p.expect(token.COLON, "parseArgs")
 
-		iVal, item := p.parseValue()
+		iVal := p.parseValue()
 		switch v := iVal.(type) {
 		case *ast.BasicLit:
-			a.Value = &ast.Arg_Blit{Blit: v}
-		case *ast.ListLit:
-			a.Value = &ast.Arg_Llit{Llit: v}
-		case *ast.ObjLit:
-			a.Value = &ast.Arg_Olit{Olit: v}
+			a.Value = &ast.Arg_BasicLit{BasicLit: v}
+		case *ast.CompositeLit:
+			a.Value = &ast.Arg_CompositeLit{CompositeLit: v}
 		}
-		p.pk = item
 	}
 }
 
 // parseValue parses a value
-func (p *parser) parseValue() (v interface{}, item lexer.Item) {
-	for {
-		item = p.next()
+func (p *parser) parseValue() (v interface{}) {
+	item := p.next()
 
-		switch item.Typ {
-		case token.COMMENT:
-			continue
-		case token.LBRACK: // TODO
-		case token.LBRACE: // TODO
-		case token.STRING, token.INT, token.FLOAT, token.IDENT:
-			// Enforce true/false for ident
-			if item.Typ == token.IDENT {
-				switch item.Val {
-				case "true", "false":
-					item.Typ = token.BOOL
-				case "null":
-					item.Typ = token.NULL
-				default:
-					p.unexpected(item, "parseValue")
-				}
-			}
-
-			// Construct basic literal
-			v = &ast.BasicLit{
-				ValuePos: int64(item.Pos),
-				Value:    item.Val,
-				Kind:     int64(item.Typ),
-			}
-			item = p.next()
-			return
-		default:
-			p.unexpected(item, "parseValue")
+	switch item.Typ {
+	case token.COMMENT:
+		return p.parseValue()
+	case token.LBRACK:
+		listLit := &ast.CompositeLit_ListLit{ListLit: &ast.ListLit{}}
+		compLit := &ast.CompositeLit{
+			Opening: int64(item.Pos),
+			Value:   listLit,
 		}
+		v = compLit
+
+		var i interface{}
+		for {
+			item = p.peek()
+			if item.Typ == token.RBRACK {
+				compLit.Closing = int64(item.Pos)
+				p.pk = lexer.Item{}
+				return
+			}
+
+			i = p.parseValue()
+			switch t := i.(type) {
+			case *ast.BasicLit:
+				if listLit.ListLit.List == nil {
+					listLit.ListLit.List = &ast.ListLit_BasicList{BasicList: &ast.ListLit_Basic{}}
+				}
+
+				bList, ok := listLit.ListLit.List.(*ast.ListLit_BasicList)
+				if !ok {
+					p.errorf("cannot mix list types")
+					return
+				}
+
+				bList.BasicList.Values = append(bList.BasicList.Values, t)
+			case *ast.CompositeLit:
+				if listLit.ListLit.List == nil {
+					listLit.ListLit.List = &ast.ListLit_CompositeList{CompositeList: &ast.ListLit_Composite{}}
+				}
+
+				cList, ok := listLit.ListLit.List.(*ast.ListLit_CompositeList)
+				if !ok {
+					p.errorf("cannot mix list types")
+					return
+				}
+
+				cList.CompositeList.Values = append(cList.CompositeList.Values, t)
+			}
+		}
+	case token.LBRACE:
+		objLit := &ast.ObjLit{}
+		compLit := &ast.CompositeLit{
+			Opening: int64(item.Pos),
+			Value:   &ast.CompositeLit_ObjLit{ObjLit: objLit},
+		}
+		v = compLit
+
+		for {
+			item = p.peek()
+			if item.Typ == token.RBRACE {
+				compLit.Closing = int64(item.Pos)
+				p.pk = lexer.Item{}
+				return
+			}
+
+			id := p.parseIdent("parseValue:ObjectLit")
+
+			p.expect(token.COLON, "parseValue:ObjectLit")
+
+			pcLit := &ast.CompositeLit{}
+			i := p.parseValue()
+			switch t := i.(type) {
+			case *ast.BasicLit:
+				pcLit.Value = &ast.CompositeLit_BasicLit{BasicLit: t}
+			case *ast.CompositeLit:
+				pcLit = t
+			}
+
+			objLit.Fields = append(objLit.Fields, &ast.ObjLit_Pair{
+				Key: id,
+				Val: pcLit,
+			})
+		}
+	case token.STRING, token.INT, token.FLOAT, token.IDENT:
+		// Enforce true/false for ident
+		if item.Typ == token.IDENT {
+			switch item.Val {
+			case "true", "false":
+				item.Typ = token.BOOL
+			case "null":
+				item.Typ = token.NULL
+			default:
+				p.unexpected(item, "parseValue:BasicLit")
+			}
+		}
+
+		// Construct basic literal
+		v = &ast.BasicLit{
+			ValuePos: int64(item.Pos),
+			Value:    item.Val,
+			Kind:     int64(item.Typ),
+		}
+		return
+	default:
+		p.unexpected(item, "parseValue")
 	}
+	return
 }
 
 // parseArgsDef parses a list of argument definitions.
@@ -480,16 +552,13 @@ func (p *parser) parseArgsDef(pdg *ast.DocGroup) (args []*ast.Field, rpos int64)
 		item = p.next()
 		if item.Typ == token.ASSIGN {
 			p.pk = lexer.Item{}
-			iVal, item := p.parseValue()
+			iVal := p.parseValue()
 			switch v := iVal.(type) {
 			case *ast.BasicLit:
-				f.Default = &ast.Field_Blit{Blit: v}
-			case *ast.ListLit:
-				f.Default = &ast.Field_Llit{Llit: v}
-			case *ast.ObjLit:
-				f.Default = &ast.Field_Olit{Olit: v}
+				f.Default = &ast.Field_BasicLit{BasicLit: v}
+			case *ast.CompositeLit:
+				f.Default = &ast.Field_CompositeLit{CompositeLit: v}
 			}
-			p.pk = item
 		} else {
 			p.pk = item
 		}

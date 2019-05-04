@@ -18,6 +18,7 @@ message Document {
     repeated TypeDecl types = 5;
 }
 
+// A DocGroup is a collection of documentation: descriptions or comments
 message DocGroup {
     message Doc {
         string text = 1;
@@ -32,9 +33,8 @@ message Arg {
     Ident name = 1;
 
     oneof value {
-        BasicLit blit = 2;
-        ListLit llit = 3;
-        ObjLit olit = 4;
+        BasicLit basicLit = 2;
+        CompositeLit compositeLit = 3;
     }
 }
 
@@ -55,12 +55,11 @@ message Field {
 
     // parameter default value; or nil
     oneof default {
-        BasicLit blit = 7;
-        ListLit llit = 8;
-        ObjLit olit = 9;
+        BasicLit basicLit = 7;
+        CompositeLit compositeLit = 8;
     }
 
-    repeated DirectiveLit directives = 10; // directives; or nil
+    repeated DirectiveLit directives = 9; // directives; or nil
 }
 
 // A FieldList represents a list of Fields, enclosed by parentheses or braces.
@@ -85,11 +84,44 @@ message BasicLit {
     string value = 3;
 }
 
-// TODO: ListLit represents a list literal value.
-message ListLit {}
+// CompositeLit represents a composite literal.
+message CompositeLit {
+    int64 opening = 1;
 
-// TODO: ObjLit represents an object literal value.
-message ObjLit {}
+    oneof value {
+        BasicLit basicLit = 2;
+        ListLit listLit = 3;
+        ObjLit objLit = 4;
+    }
+
+    int64 closing = 5;
+}
+
+// ListLit represents a list literal value.
+message ListLit {
+    message Basic {
+        repeated BasicLit values = 1;
+    }
+
+    message Composite {
+        repeated CompositeLit values = 1;
+    }
+
+    oneof list {
+        Basic basicList = 1;
+        Composite compositeList = 2;
+    }
+}
+
+// ObjLit represents an object literal.
+message ObjLit {
+    message Pair {
+        Ident key = 1;
+        CompositeLit val = 2;
+    }
+
+    repeated Pair fields = 1;
+}
 
 // List represents a List type.
 message List {

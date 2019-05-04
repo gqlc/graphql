@@ -173,6 +173,67 @@ func TestScanValue(t *testing.T) {
 			)
 		})
 	})
+
+	t.Run("composite", func(subT *testing.T) {
+
+		subT.Run("list", func(triT *testing.T) {
+			fset := token.NewDocSet()
+			src := []byte(`["1", 1, true, 1.2]`)
+			l := &lxr{
+				line:  1,
+				items: make(chan Item),
+				src:   src,
+				doc:   fset.AddDoc("", fset.Base(), len(src)),
+			}
+
+			go func() {
+				l.scanValue()
+				close(l.items)
+			}()
+
+			expectItems(triT, l,
+				Item{Typ: token.LBRACK, Line: 1, Pos: 1, Val: "["},
+				Item{Typ: token.STRING, Line: 1, Pos: 2, Val: `"1"`},
+				Item{Typ: token.INT, Line: 1, Pos: 7, Val: "1"},
+				Item{Typ: token.IDENT, Line: 1, Pos: 10, Val: "true"},
+				Item{Typ: token.FLOAT, Line: 1, Pos: 16, Val: "1.2"},
+				Item{Typ: token.RBRACK, Line: 1, Pos: 19, Val: "]"},
+			)
+		})
+
+		subT.Run("object", func(triT *testing.T) {
+			fset := token.NewDocSet()
+			src := []byte(`{hello: "world", one: 1, two: 2.5, thr: true}`)
+			l := &lxr{
+				line:  1,
+				items: make(chan Item),
+				src:   src,
+				doc:   fset.AddDoc("", fset.Base(), len(src)),
+			}
+
+			go func() {
+				l.scanValue()
+				close(l.items)
+			}()
+
+			expectItems(triT, l,
+				Item{Typ: token.LBRACE, Line: 1, Pos: 1, Val: "{"},
+				Item{Typ: token.IDENT, Line: 1, Pos: 2, Val: "hello"},
+				Item{Typ: token.COLON, Line: 1, Pos: 7, Val: ":"},
+				Item{Typ: token.STRING, Line: 1, Pos: 9, Val: `"world"`},
+				Item{Typ: token.IDENT, Line: 1, Pos: 18, Val: "one"},
+				Item{Typ: token.COLON, Line: 1, Pos: 21, Val: ":"},
+				Item{Typ: token.INT, Line: 1, Pos: 23, Val: "1"},
+				Item{Typ: token.IDENT, Line: 1, Pos: 26, Val: "two"},
+				Item{Typ: token.COLON, Line: 1, Pos: 29, Val: ":"},
+				Item{Typ: token.FLOAT, Line: 1, Pos: 31, Val: "2.5"},
+				Item{Typ: token.IDENT, Line: 1, Pos: 36, Val: "thr"},
+				Item{Typ: token.COLON, Line: 1, Pos: 39, Val: ":"},
+				Item{Typ: token.IDENT, Line: 1, Pos: 41, Val: "true"},
+				Item{Typ: token.RBRACE, Line: 1, Pos: 45, Val: "}"},
+			)
+		})
+	})
 }
 
 func TestLexObject(t *testing.T) {
@@ -181,7 +242,7 @@ func TestLexObject(t *testing.T) {
 
 		subT.Run("perfect", func(triT *testing.T) {
 			fset := token.NewDocSet()
-			src := []byte(`type Rect implements One & Two & Three & test.Four`)
+			src := []byte(`type Rect implements One & Two & Three & Four`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
 			expectItems(triT, l, []Item{
 				{Typ: token.TYPE, Line: 1, Pos: 1, Val: "type"},
@@ -190,9 +251,7 @@ func TestLexObject(t *testing.T) {
 				{Typ: token.IDENT, Line: 1, Pos: 22, Val: "One"},
 				{Typ: token.IDENT, Line: 1, Pos: 28, Val: "Two"},
 				{Typ: token.IDENT, Line: 1, Pos: 34, Val: "Three"},
-				{Typ: token.IDENT, Line: 1, Pos: 42, Val: "test"},
-				{Typ: token.PERIOD, Line: 1, Pos: 46, Val: "."},
-				{Typ: token.IDENT, Line: 1, Pos: 47, Val: "Four"},
+				{Typ: token.IDENT, Line: 1, Pos: 42, Val: "Four"},
 			}...)
 			expectEOF(triT, l)
 		})

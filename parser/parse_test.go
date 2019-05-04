@@ -1,12 +1,148 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/gqlc/graphql/ast"
 	"github.com/gqlc/graphql/token"
 	"strings"
 	"testing"
 )
+
+func TestParseValue(t *testing.T) {
+	t.Run("basic", func(subT *testing.T) {
+		topLvlDirectives := `@test(one: 1, two: "2", thr: 3.0, four: true)`
+		doc, err := parse("parseValue:basic", topLvlDirectives)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Directives) != 1 {
+			subT.Fail()
+			return
+		}
+
+		d := doc.Directives[0]
+		if len(d.Args.Args) != 4 {
+			subT.Fail()
+			return
+		}
+
+		vals := map[string]ast.BasicLit{
+			"one":  {Kind: int64(token.INT), Value: "1"},
+			"two":  {Kind: int64(token.STRING), Value: `"2"`},
+			"thr":  {Kind: int64(token.FLOAT), Value: "3.0"},
+			"four": {Kind: int64(token.IDENT), Value: "true"},
+		}
+		for _, arg := range d.Args.Args {
+			b, ok := arg.Value.(*ast.Arg_BasicLit)
+			if !ok {
+				subT.Fail()
+				return
+			}
+
+			v, exists := vals[arg.Name.Name]
+			if !exists {
+				subT.Fail()
+				return
+			}
+
+			if b.BasicLit.Kind != v.Kind && b.BasicLit.Value != v.Value {
+				subT.Fail()
+				return
+			}
+		}
+	})
+
+	t.Run("list", func(subT *testing.T) {
+		topLvlDirectives := `@test(one: [1, "1", 1.1, true])`
+		doc, err := parse("parseValue:list", topLvlDirectives)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Directives) != 1 {
+			subT.Fail()
+			return
+		}
+
+		d := doc.Directives[0]
+		if len(d.Args.Args) != 1 {
+			subT.Fail()
+			return
+		}
+
+		arg := d.Args.Args[0]
+		c, ok := arg.Value.(*ast.Arg_CompositeLit)
+		if !ok {
+			subT.Fail()
+			return
+		}
+
+		l, ok := c.CompositeLit.Value.(*ast.CompositeLit_ListLit)
+		if !ok {
+			subT.Fail()
+			return
+		}
+
+		bl, ok := l.ListLit.List.(*ast.ListLit_BasicList)
+		if !ok {
+			subT.Fail()
+			return
+		}
+
+		vals := map[string]int{"1": 0, `"1"`: 0, "1.1": 0, "true": 0}
+		for _, e := range bl.BasicList.Values {
+			delete(vals, e.Value)
+		}
+		if len(vals) > 0 {
+			subT.Fail()
+			return
+		}
+	})
+
+	t.Run("obj", func(subT *testing.T) {
+		topLvlDirectives := `@test(one: {one: 1, two: "2", thr: 3.0, four: true, five: [], six: {}})`
+		doc, err := parse("parseValue:list", topLvlDirectives)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Directives) != 1 {
+			subT.Fail()
+			return
+		}
+
+		d := doc.Directives[0]
+		if len(d.Args.Args) != 1 {
+			subT.Fail()
+			return
+		}
+
+		arg := d.Args.Args[0]
+		c, ok := arg.Value.(*ast.Arg_CompositeLit)
+		if !ok {
+			subT.Fail()
+			return
+		}
+
+		l, ok := c.CompositeLit.Value.(*ast.CompositeLit_ObjLit)
+		if !ok {
+			subT.Fail()
+			return
+		}
+
+		vals := map[string]int{"one": 0, "two": 0, "thr": 0, "four": 0, "five": 0, "six": 0}
+		for _, p := range l.ObjLit.Fields {
+			delete(vals, p.Key.Name)
+		}
+		if len(vals) > 0 {
+			subT.Fail()
+			return
+		}
+	})
+}
 
 func TestParseDoc(t *testing.T) {
 
@@ -113,7 +249,6 @@ func TestParseDoc(t *testing.T) {
 		}
 
 		o := spec.Type.(*ast.TypeSpec_Object).Object
-		fmt.Println(o)
 		if len(o.Fields.List) != 4 {
 			subT.Fail()
 			return

@@ -734,7 +734,7 @@ func scanDirective(l *lxr) bool {
 
 // scanValue scans a Value
 func (l *lxr) scanValue() (ok bool) {
-	var emitter func()
+	emitter := func() {}
 
 	switch r := l.peek(); {
 	case r == '$':
@@ -786,6 +786,9 @@ func (l *lxr) scanValue() (ok bool) {
 		ok = l.scanList("]", defListSep, 0, func(ll *lxr) bool {
 			return l.scanValue()
 		})
+		if ok {
+			emitter = func() { l.emit(token.RBRACK) }
+		}
 	case r == '{':
 		l.accept("{")
 		l.emit(token.LBRACE)
@@ -811,6 +814,9 @@ func (l *lxr) scanValue() (ok bool) {
 
 			return ll.scanValue()
 		})
+		if ok {
+			emitter = func() { l.emit(token.RBRACE) }
+		}
 	}
 
 	emitter()
@@ -957,13 +963,6 @@ func (l *lxr) scanIdentifier() token.Token {
 		return token.ERR
 	}
 
-	if l.peek() == '.' {
-		l.emit(token.Lookup(word))
-		l.accept(".")
-		l.emit(token.PERIOD)
-		return l.scanIdentifier()
-	}
-
 	return token.Lookup(word)
 }
 
@@ -974,7 +973,7 @@ func (l *lxr) atTerminator() bool {
 	}
 
 	switch r {
-	case eof, '.', ',', ':', ')', '(', '!', ']':
+	case eof, '.', ',', ':', ')', '(', '!', ']', '}':
 		return true
 	}
 	return false
