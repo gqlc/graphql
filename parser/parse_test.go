@@ -147,7 +147,7 @@ func TestParseValue(t *testing.T) {
 func TestParseDoc(t *testing.T) {
 
 	t.Run("topLvlDirectives", func(subT *testing.T) {
-		topLvlDirectives := `@test(one: 1, two: 2, thr: 3)`
+		topLvlDirectives := `@import(one: 1, two: 2, thr: 3)`
 		doc, err := parse("topLvlDirectives", topLvlDirectives)
 		if err != nil {
 			subT.Error(err)

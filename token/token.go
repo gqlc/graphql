@@ -47,7 +47,6 @@ const (
 
 	keyBeg
 	PACKAGE
-	IMPORT
 	SCHEMA
 	TYPE
 
@@ -91,7 +90,6 @@ var tokens = [...]string{
 	COLON:  ":",
 
 	PACKAGE: "package",
-	IMPORT:  "import",
 	SCHEMA:  "schema",
 	TYPE:    "type",
 

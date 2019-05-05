@@ -249,7 +249,7 @@ func lexDef(l *lxr) stateFn {
 		l.emit(ident)
 	}
 
-	if ident != token.IMPORT && ident != token.EXTEND && ident != token.SCHEMA && ident != token.DIRECTIVE {
+	if ident != token.EXTEND && ident != token.SCHEMA && ident != token.DIRECTIVE {
 		l.acceptRun(" \t")
 		l.ignore()
 
