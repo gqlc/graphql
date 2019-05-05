@@ -1,10 +1,8 @@
 language: go
-go:
-- '1.11'
-- tip
 
-env:
-  - GO111MODULE=on
+go:
+  - '1.12'
+  - tip
 
 git:
   depth: 1
