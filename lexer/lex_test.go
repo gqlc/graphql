@@ -27,7 +27,7 @@ scalar URI
 
 func TestLexScalar(t *testing.T) {
 
-	t.Run("simple", func(subT *testing.T) {
+	t.Run("Simple", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`scalar URI`)
 		l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -38,7 +38,7 @@ func TestLexScalar(t *testing.T) {
 		expectEOF(subT, l)
 	})
 
-	t.Run("withDirectives", func(subT *testing.T) {
+	t.Run("WithDirectives", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`scalar URI @gotype @jstype() @darttype(if: Boolean)`)
 		l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -70,7 +70,7 @@ func TestScanValue(t *testing.T) {
 	//	  - Strings are tested by LexImports
 	//    - List and Objects are handled by ScanList which is implemented in others
 
-	t.Run("var", func(subT *testing.T) {
+	t.Run("Var", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`$a`)
 		l := &lxr{
@@ -91,7 +91,7 @@ func TestScanValue(t *testing.T) {
 		}...)
 	})
 
-	t.Run("int", func(subT *testing.T) {
+	t.Run("Int", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`12354654684013246813216513213254686210`)
 		l := &lxr{
@@ -111,7 +111,7 @@ func TestScanValue(t *testing.T) {
 		)
 	})
 
-	t.Run("float", func(subT *testing.T) {
+	t.Run("Float", func(subT *testing.T) {
 
 		subT.Run("fractional", func(triT *testing.T) {
 			fset := token.NewDocSet()
@@ -174,9 +174,9 @@ func TestScanValue(t *testing.T) {
 		})
 	})
 
-	t.Run("composite", func(subT *testing.T) {
+	t.Run("Composite", func(subT *testing.T) {
 
-		subT.Run("list", func(triT *testing.T) {
+		subT.Run("List", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`["1", 1, true, 1.2]`)
 			l := &lxr{
@@ -201,7 +201,7 @@ func TestScanValue(t *testing.T) {
 			)
 		})
 
-		subT.Run("object", func(triT *testing.T) {
+		subT.Run("Object", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`{hello: "world", one: 1, two: 2.5, thr: true}`)
 			l := &lxr{
@@ -238,9 +238,9 @@ func TestScanValue(t *testing.T) {
 
 func TestLexObject(t *testing.T) {
 
-	t.Run("withImpls", func(subT *testing.T) {
+	t.Run("WithImpls", func(subT *testing.T) {
 
-		subT.Run("perfect", func(triT *testing.T) {
+		subT.Run("Perfect", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`type Rect implements One & Two & Three & Four`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -256,7 +256,7 @@ func TestLexObject(t *testing.T) {
 			expectEOF(triT, l)
 		})
 
-		subT.Run("invalidSeparator", func(triT *testing.T) {
+		subT.Run("InvalidSeparator", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`type Rect implements One , Two & Three`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -282,9 +282,9 @@ func TestLexObject(t *testing.T) {
 		})
 	})
 
-	t.Run("withDirectives", func(subT *testing.T) {
+	t.Run("WithDirectives", func(subT *testing.T) {
 
-		subT.Run("endsWithBrace", func(triT *testing.T) {
+		subT.Run("EndsWithBrace", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`type Rect @green @blue {}`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -301,7 +301,7 @@ func TestLexObject(t *testing.T) {
 			expectEOF(triT, l)
 		})
 
-		subT.Run("endsWithNewline", func(triT *testing.T) {
+		subT.Run("EndsWithNewline", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`type Rect @green @blue
 `)
@@ -317,7 +317,7 @@ func TestLexObject(t *testing.T) {
 			expectEOF(triT, l)
 		})
 
-		subT.Run("endsWithEOF", func(triT *testing.T) {
+		subT.Run("EndsWithEOF", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`type Rect @green @blue`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -333,9 +333,9 @@ func TestLexObject(t *testing.T) {
 		})
 	})
 
-	t.Run("withImpls&Directives", func(subT *testing.T) {
+	t.Run("WithImpls&Directives", func(subT *testing.T) {
 
-		subT.Run("endsWithBrace", func(triT *testing.T) {
+		subT.Run("EndsWithBrace", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`type Rect implements One & Two & Three @green @blue {}`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -356,7 +356,7 @@ func TestLexObject(t *testing.T) {
 			expectEOF(triT, l)
 		})
 
-		subT.Run("endsWithNewline", func(triT *testing.T) {
+		subT.Run("EndsWithNewline", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`type Rect implements One & Two & Three @green @blue
 `)
@@ -376,7 +376,7 @@ func TestLexObject(t *testing.T) {
 			expectEOF(triT, l)
 		})
 
-		subT.Run("endsWithEOF", func(triT *testing.T) {
+		subT.Run("EndsWithEOF", func(triT *testing.T) {
 			fset := token.NewDocSet()
 			src := []byte(`type Rect implements One & Two & Three @green @blue`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -396,9 +396,9 @@ func TestLexObject(t *testing.T) {
 		})
 	})
 
-	t.Run("withFields", func(subT *testing.T) {
+	t.Run("WithFields", func(subT *testing.T) {
 
-		subT.Run("asFieldsDef", func(triT *testing.T) {
+		subT.Run("AsFieldsDef", func(triT *testing.T) {
 
 			triT.Run("simple", func(qt *testing.T) {
 				fset := token.NewDocSet()
@@ -524,7 +524,7 @@ func TestLexObject(t *testing.T) {
 			})
 		})
 
-		subT.Run("asEnumValsDef", func(triT *testing.T) {
+		subT.Run("AsEnumValsDef", func(triT *testing.T) {
 
 			triT.Run("simple", func(qt *testing.T) {
 				fset := token.NewDocSet()
@@ -614,7 +614,7 @@ func TestLexObject(t *testing.T) {
 			})
 		})
 
-		subT.Run("asInputFieldsDef", func(triT *testing.T) {
+		subT.Run("AsInputFieldsDef", func(triT *testing.T) {
 
 			triT.Run("simple", func(qt *testing.T) {
 				fset := token.NewDocSet()
@@ -721,7 +721,7 @@ func TestLexObject(t *testing.T) {
 		})
 	})
 
-	t.Run("all", func(subT *testing.T) {
+	t.Run("All", func(subT *testing.T) {
 		// Note: This test does not use a valid GraphQL type decl.
 		// 		 Instead, it uses a construction that is valid by the lexer and tests
 		//		 the full capabilities of the lexObject stateFn.
@@ -848,7 +848,7 @@ func TestLexObject(t *testing.T) {
 
 func TestLexUnion(t *testing.T) {
 
-	t.Run("simple", func(subT *testing.T) {
+	t.Run("Simple", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`union Pizza = Triangle | Circle`)
 		l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -862,7 +862,7 @@ func TestLexUnion(t *testing.T) {
 		expectEOF(subT, l)
 	})
 
-	t.Run("withDirectives", func(subT *testing.T) {
+	t.Run("WithDirectives", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`union Pizza @ham @pineapple = Triangle | Circle`)
 		l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -879,11 +879,43 @@ func TestLexUnion(t *testing.T) {
 		}...)
 		expectEOF(subT, l)
 	})
+
+	t.Run("Extension", func(subT *testing.T) {
+		subT.Run("WithDirectives", func(triT *testing.T) {
+			fset := token.NewDocSet()
+			src := []byte(`union Pizza @ham @pineapple`)
+			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
+			expectItems(triT, l, []Item{
+				{Typ: token.UNION, Line: 1, Pos: 1, Val: "union"},
+				{Typ: token.IDENT, Line: 1, Pos: 7, Val: "Pizza"},
+				{Typ: token.AT, Line: 1, Pos: 13, Val: "@"},
+				{Typ: token.IDENT, Line: 1, Pos: 14, Val: "ham"},
+				{Typ: token.AT, Line: 1, Pos: 18, Val: "@"},
+				{Typ: token.IDENT, Line: 1, Pos: 19, Val: "pineapple"},
+			}...)
+			expectEOF(triT, l)
+		})
+
+		subT.Run("WithMembers", func(triT *testing.T) {
+			fset := token.NewDocSet()
+			src := []byte(`extend union Pizza = Triangle | Circle`)
+			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
+			expectItems(triT, l, []Item{
+				{Typ: token.EXTEND, Line: 1, Pos: 1, Val: "extend"},
+				{Typ: token.UNION, Line: 1, Pos: 8, Val: "union"},
+				{Typ: token.IDENT, Line: 1, Pos: 14, Val: "Pizza"},
+				{Typ: token.ASSIGN, Line: 1, Pos: 20, Val: "="},
+				{Typ: token.IDENT, Line: 1, Pos: 22, Val: "Triangle"},
+				{Typ: token.IDENT, Line: 1, Pos: 33, Val: "Circle"},
+			}...)
+			expectEOF(triT, l)
+		})
+	})
 }
 
 func TestLexDirective(t *testing.T) {
 
-	t.Run("simple", func(subT *testing.T) {
+	t.Run("Simple", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`directive @skip on FIELD | FIELD_DEFINITION`)
 		l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -899,7 +931,7 @@ func TestLexDirective(t *testing.T) {
 		expectEOF(subT, l)
 	})
 
-	t.Run("withArgs", func(subT *testing.T) {
+	t.Run("WithArgs", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`directive @skip(if: Boolean, else: Boolean = false) on FIELD | FIELD_DEFINITION`)
 		l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
@@ -925,7 +957,7 @@ func TestLexDirective(t *testing.T) {
 		expectEOF(subT, l)
 	})
 
-	t.Run("argsWithDirectives", func(subT *testing.T) {
+	t.Run("ArgsWithDirectives", func(subT *testing.T) {
 		fset := token.NewDocSet()
 		src := []byte(`directive @skip(if: Boolean @one(), else: Boolean = false @one() @two()) on FIELD | FIELD_DEFINITION`)
 		l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)

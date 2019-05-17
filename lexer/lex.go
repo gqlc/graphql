@@ -497,11 +497,10 @@ func lexUnion(l *lxr) stateFn {
 		l.backup()
 	}
 
-	if l.accept("\r\n") {
+	switch r := l.next(); r {
+	case '\n', '\r', eof:
 		return lexDoc
-	}
-
-	if l.accept("=") {
+	case '=':
 		l.emit(token.ASSIGN)
 	}
 
