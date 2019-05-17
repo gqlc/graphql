@@ -408,7 +408,7 @@ func TestParseDoc(t *testing.T) {
 	})
 
 	t.Run("extension", func(subT *testing.T) {
-		ex := `extend type Test @one`
+		ex := `extend type Test`
 		doc, err := parse("extension", ex)
 		if err != nil {
 			subT.Error(err)
@@ -423,6 +423,26 @@ func TestParseDoc(t *testing.T) {
 		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeExtSpec).TypeExtSpec
 
 		o := spec.Type
+		if o.Type == nil {
+			subT.Fail()
+			return
+		}
+
+		ex = `extend type Test @one`
+		doc, err = parse("extension", ex)
+		if err != nil {
+			subT.Error(err)
+			return
+		}
+
+		if len(doc.Types) == 0 {
+			subT.Fail()
+			return
+		}
+
+		spec = doc.Types[0].Spec.(*ast.TypeDecl_TypeExtSpec).TypeExtSpec
+
+		o = spec.Type
 		if o.Type == nil {
 			subT.Fail()
 			return

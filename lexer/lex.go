@@ -304,6 +304,8 @@ func lexObject(l *lxr) stateFn {
 
 	r := l.peek()
 	switch r {
+	case '\r', '\n', eof:
+		break
 	case 'i':
 		implIdent := l.scanIdentifier()
 		if implIdent != token.IMPLEMENTS {
@@ -326,14 +328,12 @@ func lexObject(l *lxr) stateFn {
 		l.backup()
 
 		r = l.peek()
-		switch r {
-		case '@':
-			goto dirs
-		case '{':
+		if r == '{' {
 			return lexFields
 		}
-		break
-	dirs:
+		if r != '@' && (r == '\n' || r == '\r' || r == eof) {
+			break
+		}
 		fallthrough
 	case '@':
 		ok := l.scanDirectives("{\r\n", " \t")
