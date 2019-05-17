@@ -1037,4 +1037,5 @@ func (p *parser) parseExtension(item lexer.Item, cdg *ast.DocGroup, d *ast.Docum
 	}
 
 	extSpec.Type = d.Types[len(d.Types)-1].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+	d.Types = d.Types[:len(d.Types)-1]
 }
