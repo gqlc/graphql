@@ -407,28 +407,71 @@ func TestParseDoc(t *testing.T) {
 	})
 
 	t.Run("Union", func(subT *testing.T) {
-		uni := `union Test @one @two = One | Two | Three | Four`
-		doc, err := parse("Union", uni)
-		if err != nil {
-			subT.Error(err)
-			return
-		}
+		subT.Run("NoMemberOrDirectives", func(triT *testing.T) {
+			uni := `union Test`
+			doc, err := parse("NoMembersOrDirectives", uni)
+			if err != nil {
+				triT.Error(err)
+				return
+			}
 
-		if len(doc.Types) == 0 {
-			subT.Fail()
-			return
-		}
+			if len(doc.Types) == 0 {
+				triT.Fail()
+				return
+			}
 
-		spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
-		if len(spec.Directives) == 0 {
-			subT.Fail()
-			return
-		}
+			spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
 
-		o := spec.Type.(*ast.TypeSpec_Union).Union
-		if len(o.Members) != 4 {
-			subT.Fail()
-		}
+			o := spec.Type.(*ast.TypeSpec_Union).Union
+			if len(o.Members) != 0 {
+				triT.Fail()
+			}
+		})
+
+		subT.Run("SingleMember", func(triT *testing.T) {
+			uni := `union Test = One`
+			doc, err := parse("Union", uni)
+			if err != nil {
+				triT.Error(err)
+				return
+			}
+
+			if len(doc.Types) == 0 {
+				triT.Fail()
+				return
+			}
+
+			spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+			o := spec.Type.(*ast.TypeSpec_Union).Union
+			if len(o.Members) != 1 {
+				triT.Fail()
+			}
+		})
+
+		subT.Run("WithDirectivesAndMembers", func(triT *testing.T) {
+			uni := `union Test @one @two = One | Two | Three | Four`
+			doc, err := parse("Union", uni)
+			if err != nil {
+				triT.Error(err)
+				return
+			}
+
+			if len(doc.Types) == 0 {
+				triT.Fail()
+				return
+			}
+
+			spec := doc.Types[0].Spec.(*ast.TypeDecl_TypeSpec).TypeSpec
+			if len(spec.Directives) == 0 {
+				triT.Fail()
+				return
+			}
+
+			o := spec.Type.(*ast.TypeSpec_Union).Union
+			if len(o.Members) != 4 {
+				triT.Fail()
+			}
+		})
 
 		subT.Run("Extension", func(triT *testing.T) {
 			uni := `extend union Test @one @two = One | Two | Three | Four`

@@ -881,17 +881,30 @@ func TestLexUnion(t *testing.T) {
 	})
 
 	t.Run("Extension", func(subT *testing.T) {
-		subT.Run("WithDirectives", func(triT *testing.T) {
+		subT.Run("WithNothing", func(triT *testing.T) {
 			fset := token.NewDocSet()
-			src := []byte(`union Pizza @ham @pineapple`)
+			src := []byte(`extend union Pizza`)
 			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
 			expectItems(triT, l, []Item{
-				{Typ: token.UNION, Line: 1, Pos: 1, Val: "union"},
-				{Typ: token.IDENT, Line: 1, Pos: 7, Val: "Pizza"},
-				{Typ: token.AT, Line: 1, Pos: 13, Val: "@"},
-				{Typ: token.IDENT, Line: 1, Pos: 14, Val: "ham"},
-				{Typ: token.AT, Line: 1, Pos: 18, Val: "@"},
-				{Typ: token.IDENT, Line: 1, Pos: 19, Val: "pineapple"},
+				{Typ: token.EXTEND, Line: 1, Pos: 1, Val: "extend"},
+				{Typ: token.UNION, Line: 1, Pos: 8, Val: "union"},
+				{Typ: token.IDENT, Line: 1, Pos: 14, Val: "Pizza"},
+			}...)
+			expectEOF(triT, l)
+		})
+
+		subT.Run("WithDirectives", func(triT *testing.T) {
+			fset := token.NewDocSet()
+			src := []byte(`extend union Pizza @ham @pineapple`)
+			l := Lex(fset.AddDoc("", fset.Base(), len(src)), src, 0)
+			expectItems(triT, l, []Item{
+				{Typ: token.EXTEND, Line: 1, Pos: 1, Val: "extend"},
+				{Typ: token.UNION, Line: 1, Pos: 8, Val: "union"},
+				{Typ: token.IDENT, Line: 1, Pos: 14, Val: "Pizza"},
+				{Typ: token.AT, Line: 1, Pos: 20, Val: "@"},
+				{Typ: token.IDENT, Line: 1, Pos: 21, Val: "ham"},
+				{Typ: token.AT, Line: 1, Pos: 25, Val: "@"},
+				{Typ: token.IDENT, Line: 1, Pos: 26, Val: "pineapple"},
 			}...)
 			expectEOF(triT, l)
 		})

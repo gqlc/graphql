@@ -288,6 +288,7 @@ func (p *parser) parseSchema(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 	schemaSpec.Type = &ast.TypeSpec_Schema{Schema: schemaTyp}
 
 	if nitem.Typ != token.LBRACE {
+		p.pk = nitem
 		return
 	}
 	schemaTyp.RootOps.Opening = int64(nitem.Pos)
@@ -759,6 +760,7 @@ func (p *parser) parseInterface(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 	}
 
 	if item.Typ != token.LBRACE {
+		p.pk = item
 		return
 	}
 	p.pk = lexer.Item{}
@@ -798,6 +800,7 @@ func (p *parser) parseUnion(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 	}
 
 	if item.Typ != token.ASSIGN {
+		p.pk = item
 		return
 	}
 
@@ -844,6 +847,7 @@ func (p *parser) parseEnum(item lexer.Item, dg *ast.DocGroup, doc *ast.Document)
 	}
 
 	if item.Typ != token.LBRACE {
+		p.pk = item
 		return
 	}
 	p.pk = lexer.Item{}
