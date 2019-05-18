@@ -503,6 +503,7 @@ func lexUnion(l *lxr) stateFn {
 
 	switch r := l.next(); r {
 	case '\n', '\r', eof:
+		l.ignore()
 		return lexDoc
 	case '=':
 		l.emit(token.ASSIGN)
@@ -523,6 +524,8 @@ func lexUnion(l *lxr) stateFn {
 	if !ok {
 		return nil
 	}
+
+	l.ignore()
 	return lexDoc
 }
 

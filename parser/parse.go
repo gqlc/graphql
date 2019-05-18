@@ -237,6 +237,7 @@ func (p *parser) parseDoc(dg *ast.DocGroup, d *ast.Document) {
 		p.parseDirectiveLit(cdg, item, &d.Directives)
 	case token.SCHEMA:
 		p.parseSchema(item, cdg, d)
+		d.Schema = d.Types[len(d.Types)-1]
 	case token.SCALAR:
 		p.parseScalar(item, cdg, d)
 	case token.TYPE:
@@ -266,7 +267,6 @@ func (p *parser) parseSchema(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 		Tok:    int64(token.SCHEMA),
 		TokPos: int64(item.Pos),
 	}
-	doc.Schema = schemaDecl
 	doc.Types = append(doc.Types, schemaDecl)
 
 	// Slurp up applied directives
