@@ -297,7 +297,7 @@ func lexScalar(l *lxr) stateFn {
 	return lexDoc
 }
 
-// lexObject scans a schema, object, interface, enum, or src type definition
+// lexObject scans a schema, object, interface, enum, or input type definition
 func lexObject(l *lxr) stateFn {
 	l.acceptRun(" \t")
 	l.ignore()
@@ -313,13 +313,17 @@ func lexObject(l *lxr) stateFn {
 		}
 		l.emit(implIdent)
 
-		ok := l.scanList("@{\n", "&", 0, func(ll *lxr) bool {
+		l.acceptRun(" \t")
+		l.ignore()
+
+		ok := l.scanList("@{\r\n", "&", '&', func(ll *lxr) bool {
 			name := ll.scanIdentifier()
 			if name == token.ERR {
 				ll.errorf("error occurred when scanning implements list")
 				return false
 			}
 			ll.emit(name)
+
 			return true
 		})
 		if !ok {
@@ -502,6 +506,9 @@ func lexUnion(l *lxr) stateFn {
 		return lexDoc
 	case '=':
 		l.emit(token.ASSIGN)
+
+		l.acceptRun(" \t")
+		l.ignore()
 	}
 
 	ok := l.scanList("\r\n", "|", '|', func(ll *lxr) bool {
@@ -830,9 +837,10 @@ const defListSep = ",\n"
 // scanList does not handle descriptions but it does handle comments
 func (l *lxr) scanList(endDelims, sep string, rsep rune, elemScanner func(l *lxr) bool) bool {
 	// start delim has already been lexed
-	if strings.Contains(sep, " \t") {
-		l.acceptRun(" \t")
-	} else {
+	l.acceptRun(" \t")
+	l.ignore()
+
+	if !strings.ContainsRune(endDelims, '\n') && !strings.ContainsRune(endDelims, '\r') {
 		l.ignoreSpace()
 	}
 	if r := l.next(); strings.ContainsRune(endDelims, r) {
