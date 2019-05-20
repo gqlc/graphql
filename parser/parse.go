@@ -922,30 +922,6 @@ func (p *parser) parseInput(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 	inType.Fields.List, inType.Fields.Closing = p.parseArgsDef(dg)
 }
 
-// directive locations
-var dirLocs = map[string]ast.DirectiveLocation_Loc{
-	"QUERY":                  ast.DirectiveLocation_Query,
-	"MUTATION":               ast.DirectiveLocation_MUTATION,
-	"SUBSCRIPTION":           ast.DirectiveLocation_SUBSCRIPTION,
-	"FIELD":                  ast.DirectiveLocation_FIELD,
-	"FRAGMENT_DEFINITION":    ast.DirectiveLocation_FRAGMENT_DEFINITION,
-	"FRAGMENT_SPREAD":        ast.DirectiveLocation_FRAGMENT_SPREAD,
-	"INLINE_FRAGMENT":        ast.DirectiveLocation_INLINE_FRAGMENT,
-	"VARIABLE_DEFINITION":    ast.DirectiveLocation_VARIABLE_DEFINITION,
-	"DOCUMENT":               ast.DirectiveLocation_DOCUMENT,
-	"SCHEMA":                 ast.DirectiveLocation_SCHEMA,
-	"SCALAR":                 ast.DirectiveLocation_SCALAR,
-	"OBJECT":                 ast.DirectiveLocation_OBJECT,
-	"FIELD_DEFINITION":       ast.DirectiveLocation_FIELD_DEFINITION,
-	"ARGUMENT_DEFINITION":    ast.DirectiveLocation_ARGUMENT_DEFINITION,
-	"INTERFACE":              ast.DirectiveLocation_INTERFACE,
-	"UNION":                  ast.DirectiveLocation_UNION,
-	"ENUM":                   ast.DirectiveLocation_ENUM,
-	"ENUM_VALUE":             ast.DirectiveLocation_ENUM_VALUE,
-	"INPUT_OBJECT":           ast.DirectiveLocation_INPUT_OBJECT,
-	"INPUT_FIELD_DEFINITION": ast.DirectiveLocation_INPUT_FIELD_DEFINITION,
-}
-
 // parseDirective parses a directive declaration
 func (p *parser) parseDirective(item lexer.Item, dg *ast.DocGroup, doc *ast.Document) {
 	dirGen := &ast.TypeDecl{
@@ -996,12 +972,12 @@ func (p *parser) parseDirective(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 			return
 		}
 
-		loc, valid := dirLocs[item.Val]
+		loc, valid := ast.DirectiveLocation_Loc_value[item.Val]
 		if !valid {
 			p.unexpected(item, "parseDirectives:InvalidDirectiveLocation")
 		}
 
-		dirType.Locs = append(dirType.Locs, &ast.DirectiveLocation{Start: int64(item.Pos), Loc: loc})
+		dirType.Locs = append(dirType.Locs, &ast.DirectiveLocation{Start: int64(item.Pos), Loc: ast.DirectiveLocation_Loc(loc)})
 	}
 }
 
