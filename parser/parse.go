@@ -489,8 +489,6 @@ func (p *parser) parseValue() (v interface{}) {
 				item.Typ = token.BOOL
 			case "null":
 				item.Typ = token.NULL
-			default:
-				p.unexpected(item, "parseValue:BasicLit")
 			}
 		}
 
