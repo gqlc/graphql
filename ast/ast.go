@@ -212,22 +212,6 @@ func (s *TypeExtensionSpec) End() token.Pos {
 	return s.Type.End()
 }
 
-// Doc represents a single line documentation source i.e. Description or Comment.
-//
-type Doc struct {
-	// Text is the text after the first '#' or '"'.
-	Text string
-
-	// Pos is the position of the first '#' or '"'.
-	Char token.Pos
-
-	// Comment tells if this Doc represents a comment.
-	Comment bool
-}
-
-// IsComment reports whether the documentation is a comment or not.
-func (d *Doc) IsComment() bool { return d.Comment }
-
 // Text returns the text of the comment.
 // Documentation markers (#, ", """), the first space of a line comment, and
 // leading and trailing empty lines are removed. Multiple empty lines are
@@ -247,16 +231,30 @@ func (x *DocGroup) Text() string {
 	for _, c := range comments {
 		// Remove comment markers.
 		// The parser has given us exactly the comment text.
-		switch c[1] {
+		switch c[0] {
 		case '#':
-			//-style comment (no newline at the end)
-			c = c[2:]
+			// comment (no newline at the end)
+			c = c[1:]
 			// strip first space - required for Example tests
 			if len(c) > 0 && c[0] == ' ' {
 				c = c[1:]
 			}
 		case '"':
-			// """-style description TODO
+			c = c[1 : len(c)-1]
+
+			if len(c) == 0 {
+				break
+			}
+
+			if c[1] == '"' {
+				c = c[2 : len(c)-2]
+				break
+			}
+
+			// strip first space - required for Example tests
+			if len(c) > 0 && c[0] == ' ' {
+				c = c[1:]
+			}
 		}
 
 		// Split on newlines.
@@ -294,5 +292,5 @@ func stripTrailingWhitespace(s string) string {
 	for i > 0 && isWhitespace(s[i-1]) {
 		i--
 	}
-	return s[0:i]
+	return s[:i]
 }
