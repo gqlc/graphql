@@ -2,8 +2,8 @@
 package ast
 
 import (
+	"bytes"
 	"github.com/gqlc/graphql/token"
-	"strings"
 )
 
 // Pos returns the starting position of the argument.
@@ -222,67 +222,112 @@ func (x *DocGroup) Text() string {
 	if x == nil {
 		return ""
 	}
-	comments := make([]string, len(x.List))
-	for i, c := range x.List {
-		comments[i] = c.Text
+
+	var buf bytes.Buffer
+	x.TextTo(&buf)
+	return buf.String()
+}
+
+func (x *DocGroup) TextTo(buf *bytes.Buffer) {
+	if x == nil {
+		return
 	}
 
-	lines := make([]string, 0, 10) // most comments are less than 10 lines
-	for _, c := range comments {
+	ext1 := true
+	lLen := len(x.List) - 1
+	for j, l := range x.List {
+		c := l.Text
+
 		// Remove comment markers.
 		// The parser has given us exactly the comment text.
-		switch c[0] {
-		case '#':
-			// comment (no newline at the end)
+		c = trim(c)
+		cLen := len(c) - 1
+		if cLen == -1 && ext1 {
+			continue
+		}
+		if ext1 {
+			ext1 = false
+		}
+		if cLen == -1 && !ext1 {
+			if j < lLen {
+				if len(trim(x.List[j+1].Text)) != 0 {
+					buf.WriteByte('\n')
+					continue
+				}
+			}
+			if j == lLen {
+				break
+			}
+		}
+
+		var l, n int
+		ext := true
+		for k := 0; k < len(c); k++ {
+			if c[k] == '\n' && ext {
+				l = k
+				continue
+			}
+
+			if ext {
+				ext = false
+				l = k
+				continue
+			}
+
+			if c[k] == '\n' && !ext {
+				if c[l] == '\n' {
+					l = k
+					continue
+				}
+
+				if k-l > 0 {
+					line := c[l:k]
+					line = stripTrailingWhitespace(line)
+					n, _ = buf.WriteString(line)
+					l = k
+					continue
+				}
+			}
+		}
+		if l < cLen {
+			line := c[l:]
+			line = stripTrailingWhitespace(line)
+			n, _ = buf.WriteString(line)
+		}
+
+		if n > 0 {
+			buf.WriteByte('\n')
+		}
+	}
+}
+
+func trim(c string) string {
+	switch c[0] {
+	case '#':
+		// comment (no newline at the end)
+		c = c[1:]
+		// strip first space - required for Example tests
+		if len(c) > 0 && c[0] == ' ' {
 			c = c[1:]
-			// strip first space - required for Example tests
-			if len(c) > 0 && c[0] == ' ' {
-				c = c[1:]
-			}
-		case '"':
-			c = c[1 : len(c)-1]
+		}
+	case '"':
+		c = c[1 : len(c)-1]
 
-			if len(c) == 0 {
-				break
-			}
-
-			if c[1] == '"' {
-				c = c[2 : len(c)-2]
-				break
-			}
-
-			// strip first space - required for Example tests
-			if len(c) > 0 && c[0] == ' ' {
-				c = c[1:]
-			}
+		if len(c) == 0 {
+			break
 		}
 
-		// Split on newlines.
-		cl := strings.Split(c, "\n")
+		if c[1] == '"' {
+			c = c[2 : len(c)-2]
+			break
+		}
 
-		// Walk lines, stripping trailing white space and adding to list.
-		for _, l := range cl {
-			lines = append(lines, stripTrailingWhitespace(l))
+		// strip first space - required for Example tests
+		if len(c) > 0 && c[0] == ' ' {
+			c = c[1:]
 		}
 	}
-
-	// Remove leading blank lines; convert runs of
-	// interior blank lines to a single blank line.
-	n := 0
-	for _, line := range lines {
-		if line != "" || n > 0 && lines[n-1] != "" {
-			lines[n] = line
-			n++
-		}
-	}
-	lines = lines[:n]
-
-	// Add final "" entry to get trailing newline from Join.
-	if n > 0 && lines[n-1] != "" {
-		lines = append(lines, "")
-	}
-
-	return strings.Join(lines, "\n")
+	return c
 }
 
 func isWhitespace(ch byte) bool { return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r' }
