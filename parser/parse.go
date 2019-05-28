@@ -514,7 +514,7 @@ func (p *parser) parseArgsDef(pdg *ast.DocGroup) (args []*ast.Field, rpos int64)
 			return
 		}
 
-		if item.Typ != token.IDENT {
+		if item.Typ != token.IDENT && item.Typ != token.TYPE {
 			p.unexpected(item, "parseArgsDef:MustHaveName")
 		}
 		f := &ast.Field{

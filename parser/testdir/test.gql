@@ -1,14 +1,3 @@
-# Top level comment
-
-import (
-    # Internal documentation
-
-    "one.gql"
-
-    # Another internal documentation
-    "two.gql"
-)
-
 "Schema description"
 schema @one @two() @three(a: "A") {
     "Query description"
