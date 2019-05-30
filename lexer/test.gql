@@ -1,63 +1,63 @@
 schema @test {
-    query: Query
-    mutation: Mutation
+  query: Query
+  mutation: Mutation
 }
 
 type Query {
-    hero(episode: Episode): Character
-    human(id: ID!): Human
-    droid(id: ID!): Droid
-    search(text: String): SearchResult
+  hero(episode: Episode): Character
+  human(id: ID!): Human
+  droid(id: ID!): Droid
+  search(text: String): SearchResult
 }
 
 type Mutation {
-    createReview(episode: Episode!, review: ReviewInput!): ReviewInput
+  createReview(episode: Episode!, review: ReviewInput!): ReviewInput
 }
 
 enum Episode {
-    NEWHOPE
-    EMPIRE
-    JEDI
+  NEWHOPE
+  EMPIRE
+  JEDI
 }
 
 interface Character {
-    id: ID!,
-    name: String!,
-    appearsIn: [Episode]!,
-    friends: [Character],
+  id: ID!,
+  name: String!,
+  appearsIn: [Episode]!,
+  friends: [Character],
 }
 
 type Human implements Character {
-    id: ID!
-    name: String!
-    friends: [Character]
-    appearsIn: [Episode]!
-    starships: [Starship]
-    totalCredits: Int
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  starships: [Starship]
+  totalCredits: Int
 }
 
 type Droid implements Character {
-    id: ID!
-    name: String!
-    friends: [Character]
-    appearsIn: [Episode]!
-    primaryFunction: String
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  primaryFunction: String
 }
 
 enum LengthUnit {
-    FOOT
-    METER
+  FOOT
+  METER
 }
 
 type Starship {
-    id: ID!
-    name: String!
-    length(unit: LengthUnit = METER): Float
+  id: ID!
+  name: String!
+  length(unit: LengthUnit = METER): Float
 }
 
 union SearchResult = Human | Droid | Starship
 
 input ReviewInput {
-    stars: Int!
-    commentary: String
+  stars: Int!
+  commentary: String
 }

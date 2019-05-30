@@ -74,7 +74,7 @@ func Lex(doc *token.Doc, src []byte, mode Mode) Interface {
 		doc:   doc,
 		name:  doc.Name(),
 		src:   src,
-		items: make(chan Item),
+		items: make(chan Item, 2),
 		line:  1,
 	}
 

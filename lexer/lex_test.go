@@ -1,9 +1,61 @@
 package lexer
 
 import (
+	"encoding/json"
+	"flag"
 	"github.com/gqlc/graphql/token"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 )
+
+var (
+	gqlFile       string
+	testItemsFile string
+
+	gqlSrc    []byte
+	testItems struct{ Items []Item }
+)
+
+func init() {
+	flag.StringVar(&gqlFile, "gqlFile", "test.gql", "Specify a .gql file for testing/benchmarking")
+	flag.StringVar(&testItemsFile, "itemsFile", "items.json", "Specify a .json file that contains the lexed items for the .gql file")
+}
+
+func TestMain(m *testing.M) {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	flag.Parse()
+
+	if !filepath.IsAbs(gqlFile) {
+		gqlFile = filepath.Join(wd, gqlFile)
+	}
+
+	gqlSrc, err = ioutil.ReadFile(gqlFile)
+	if err != nil {
+		panic(err)
+	}
+
+	if !filepath.IsAbs(testItemsFile) {
+		testItemsFile = filepath.Join(wd, testItemsFile)
+	}
+
+	b, err := ioutil.ReadFile(testItemsFile)
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(b, &testItems)
+	if err != nil {
+		panic(err)
+	}
+
+	os.Exit(m.Run())
+}
 
 func TestLexDocDirectives(t *testing.T) {
 	fset := token.NewDocSet()
@@ -1023,4 +1075,49 @@ func expectEOF(t *testing.T, l Interface) {
 	if i.Typ != token.EOF {
 		t.Fatalf("expected eof but instead received: %#v", i)
 	}
+}
+
+func TestLex(t *testing.T) {
+	dset := token.NewDocSet()
+	l := Lex(dset.AddDoc("", dset.Base(), len(gqlSrc)), gqlSrc, 0)
+
+	expectItems(t, l, testItems.Items...)
+	expectEOF(t, l)
+}
+
+func BenchmarkLex(b *testing.B) {
+	d := token.NewDocSet().AddDoc("test", -1, len(gqlSrc))
+	for i := 0; i < b.N; i++ {
+		l := Lex(d, gqlSrc, 0)
+		l.Drain()
+	}
+}
+
+func TestLex2(t *testing.T) {
+	dset := token.NewDocSet()
+	l := Lex2(dset.AddDoc("", dset.Base(), len(gqlSrc)), string(gqlSrc))
+
+	expectItems(t, l, testItems.Items...)
+	expectEOF(t, l)
+}
+
+func BenchmarkLex2(b *testing.B) {
+	b.Run("ToStringBeforeAll", func(subB *testing.B) {
+		benchSrcStr := string(gqlSrc)
+
+		d := token.NewDocSet().AddDoc("test", -1, len(benchSrcStr))
+		for i := 0; i < subB.N; i++ {
+			l := Lex2(d, benchSrcStr)
+			l.Drain()
+		}
+	})
+
+	b.Run("ToStringBeforeEach", func(subB *testing.B) {
+		d := token.NewDocSet().AddDoc("test", -1, len(gqlSrc))
+		for i := 0; i < subB.N; i++ {
+			benchSrcStr := string(gqlSrc)
+			l := Lex2(d, benchSrcStr)
+			l.Drain()
+		}
+	})
 }
