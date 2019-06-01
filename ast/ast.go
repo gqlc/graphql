@@ -89,6 +89,72 @@ func (f *FieldList) NumFields() (n int) {
 	return
 }
 
+func (a *InputValue) Pos() token.Pos {
+	if a.Name != nil {
+		return a.Name.Pos()
+	}
+
+	switch v := a.Type.(type) {
+	case *InputValue_Ident:
+		return v.Ident.Pos()
+	case *InputValue_List:
+		return v.List.Pos()
+	case *InputValue_NonNull:
+		return v.NonNull.Pos()
+	}
+	return token.NoPos
+}
+
+// End returns the ending position of the field.
+func (a *InputValue) End() token.Pos {
+	if a.Directives != nil {
+		return a.Directives[0].End()
+	}
+	switch v := a.Type.(type) {
+	case *InputValue_Ident:
+		return v.Ident.End()
+	case *InputValue_List:
+		return v.List.End()
+	case *InputValue_NonNull:
+		return v.NonNull.End()
+	}
+	return token.NoPos
+}
+
+// Pos returns the starting position of the field list.
+func (a *InputValueList) Pos() token.Pos {
+	if openPos := token.Pos(a.Opening); openPos.IsValid() {
+		return openPos
+	}
+	// the list should not be empty in this case;
+	// be conservative and guard against bad ASTs
+	if len(a.List) > 0 {
+		return a.List[0].Pos()
+	}
+	return token.NoPos
+}
+
+// End returns the ending position of the field list.
+func (a *InputValueList) End() token.Pos {
+	if closePos := token.Pos(a.Closing); closePos.IsValid() {
+		return closePos + 1
+	}
+	// the list should not be empty in this case;
+	// be conservative and guard against bad ASTs
+	if n := len(a.List); n > 0 {
+		return a.List[n-1].End()
+	}
+	return token.NoPos
+}
+
+// NumValues returns the number of parameters or struct fields represented by a FieldList.
+func (a *InputValueList) NumValues() (n int) {
+	if a != nil {
+		n = len(a.List)
+	}
+	return
+}
+
 // IsValidLoc returns whether or not a given string represents a valid directive location.
 func IsValidLoc(l string) (DirectiveLocation_Loc, bool) {
 	iLoc, ok := DirectiveLocation_Loc_value[l]

@@ -500,8 +500,7 @@ func (p *parser) parseValue() (v interface{}) {
 	return
 }
 
-// parseArgsDef parses a list of argument definitions.
-func (p *parser) parseArgsDef(pdg *ast.DocGroup) (args []*ast.Field, rpos int64) {
+func (p *parser) parseFieldDefs(pdg *ast.DocGroup) (fields []*ast.Field, rpos int64) {
 	for {
 		cdg, item := p.addDocs(pdg)
 		if item.Typ == token.RPAREN || item.Typ == token.RBRACE {
@@ -509,8 +508,8 @@ func (p *parser) parseArgsDef(pdg *ast.DocGroup) (args []*ast.Field, rpos int64)
 			return
 		}
 
-		if item.Typ != token.IDENT && item.Typ != token.TYPE {
-			p.unexpected(item, "parseArgsDef:MustHaveName")
+		if item.Typ != token.IDENT && !item.Typ.IsKeyword() {
+			p.unexpected(item, "parseFieldDefs:MustHaveName")
 		}
 		f := &ast.Field{
 			Doc: cdg,
@@ -519,18 +518,18 @@ func (p *parser) parseArgsDef(pdg *ast.DocGroup) (args []*ast.Field, rpos int64)
 				Name:    item.Val,
 			},
 		}
-		args = append(args, f)
+		fields = append(fields, f)
 
 		item = p.next()
 		if item.Typ == token.LPAREN {
-			f.Args = &ast.FieldList{
+			f.Args = &ast.InputValueList{
 				Opening: int64(item.Pos),
 			}
-			f.Args.List, f.Args.Closing = p.parseArgsDef(cdg)
+			f.Args.List, f.Args.Closing = p.parseArgDefs(cdg)
 			item = p.next()
 		}
 		if item.Typ != token.COLON {
-			p.unexpected(item, "parseArgsDef:MustHaveColon")
+			p.unexpected(item, "parseFieldDefs:MustHaveColon")
 		}
 
 		typ := p.parseType(p.next())
@@ -543,21 +542,58 @@ func (p *parser) parseArgsDef(pdg *ast.DocGroup) (args []*ast.Field, rpos int64)
 			f.Type = &ast.Field_NonNull{NonNull: v}
 		}
 
+		f.Directives, p.pk = p.parseDirectives(pdg)
+	}
+}
+
+// parseArgDefs parses a list of argument definitions.
+func (p *parser) parseArgDefs(pdg *ast.DocGroup) (args []*ast.InputValue, rpos int64) {
+	for {
+		cdg, item := p.addDocs(pdg)
+		if item.Typ == token.RPAREN || item.Typ == token.RBRACE {
+			rpos = int64(item.Pos)
+			return
+		}
+
+		if item.Typ != token.IDENT && !item.Typ.IsKeyword() {
+			p.unexpected(item, "parseArgsDef:MustHaveName")
+		}
+		arg := &ast.InputValue{
+			Doc: cdg,
+			Name: &ast.Ident{
+				NamePos: int64(item.Pos),
+				Name:    item.Val,
+			},
+		}
+		args = append(args, arg)
+
+		p.expect(token.COLON, "parseArgDefs:MustHaveColon")
+
+		typ := p.parseType(p.next())
+		switch v := typ.(type) {
+		case *ast.Ident:
+			arg.Type = &ast.InputValue_Ident{Ident: v}
+		case *ast.List:
+			arg.Type = &ast.InputValue_List{List: v}
+		case *ast.NonNull:
+			arg.Type = &ast.InputValue_NonNull{NonNull: v}
+		}
+
 		item = p.next()
 		if item.Typ == token.ASSIGN {
 			p.pk = lexer.Item{}
 			iVal := p.parseValue()
 			switch v := iVal.(type) {
 			case *ast.BasicLit:
-				f.Default = &ast.Field_BasicLit{BasicLit: v}
+				arg.Default = &ast.InputValue_BasicLit{BasicLit: v}
 			case *ast.CompositeLit:
-				f.Default = &ast.Field_CompositeLit{CompositeLit: v}
+				arg.Default = &ast.InputValue_CompositeLit{CompositeLit: v}
 			}
 		} else {
 			p.pk = item
 		}
 
-		f.Directives, p.pk = p.parseDirectives(pdg)
+		arg.Directives, p.pk = p.parseDirectives(pdg)
 	}
 }
 
@@ -721,7 +757,7 @@ func (p *parser) parseObject(item lexer.Item, dg *ast.DocGroup, doc *ast.Documen
 	objType.Fields = &ast.FieldList{
 		Opening: int64(item.Pos),
 	}
-	objType.Fields.List, objType.Fields.Closing = p.parseArgsDef(dg)
+	objType.Fields.List, objType.Fields.Closing = p.parseFieldDefs(dg)
 }
 
 // parseInterface parses an interface declaration
@@ -761,7 +797,7 @@ func (p *parser) parseInterface(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 	interfaceType.Fields = &ast.FieldList{
 		Opening: int64(item.Pos),
 	}
-	interfaceType.Fields.List, interfaceType.Fields.Closing = p.parseArgsDef(dg)
+	interfaceType.Fields.List, interfaceType.Fields.Closing = p.parseFieldDefs(dg)
 }
 
 // parseUnion parses a union declaration
@@ -909,10 +945,10 @@ func (p *parser) parseInput(item lexer.Item, dg *ast.DocGroup, doc *ast.Document
 	}
 	p.pk = lexer.Item{}
 
-	inType.Fields = &ast.FieldList{
+	inType.Fields = &ast.InputValueList{
 		Opening: int64(item.Pos),
 	}
-	inType.Fields.List, inType.Fields.Closing = p.parseArgsDef(dg)
+	inType.Fields.List, inType.Fields.Closing = p.parseArgDefs(dg)
 }
 
 // parseDirective parses a directive declaration
@@ -943,9 +979,9 @@ func (p *parser) parseDirective(item lexer.Item, dg *ast.DocGroup, doc *ast.Docu
 
 	item = p.next()
 	if item.Typ == token.LPAREN {
-		args, rpos := p.parseArgsDef(dg)
+		args, rpos := p.parseArgDefs(dg)
 
-		dirType.Args = &ast.FieldList{
+		dirType.Args = &ast.InputValueList{
 			Opening: int64(item.Pos),
 			List:    args,
 			Closing: rpos,

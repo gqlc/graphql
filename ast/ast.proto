@@ -45,30 +45,52 @@ message Arg {
 //
 message Field {
     DocGroup doc = 1; // associated documentation; or nil
-    Ident name = 2; // field/parameter names; or nil
-    FieldList args = 3; // field arguments; or nil
+    Ident name = 2; // field name
+    InputValueList args = 3; // field arguments; or nil
 
-    // field/parameter type
+    // field type
     oneof type {
         Ident ident = 4;
         List list = 5;
         NonNull nonNull = 6;
     }
 
-    // parameter default value; or nil
+    repeated DirectiveLit directives = 9; // directives; or nil
+}
+
+// A FieldList represents a list of Fields, enclosed by braces.
+message FieldList {
+    int64 opening = 1; // position of opening parenthesis/brace, if any
+    repeated Field list = 2; // field list; or nil
+    int64 closing = 3; // position of closing parenthesis/brace, if any
+}
+
+// InputValue represents an argument/field which can be used to input data.
+message InputValue {
+    DocGroup doc = 1; // associated documentation; or nil
+    Ident name = 2; // name; or nil
+
+    // type
+    oneof type {
+        Ident ident = 3;
+        List list = 4;
+        NonNull nonNull = 5;
+    }
+
+    // default value; or nil
     oneof default {
-        BasicLit basicLit = 7;
-        CompositeLit compositeLit = 8;
+        BasicLit basicLit = 6;
+        CompositeLit compositeLit = 7;
     }
 
     repeated DirectiveLit directives = 9; // directives; or nil
 }
 
-// A FieldList represents a list of Fields, enclosed by parentheses or braces.
-message FieldList {
-    int64 opening = 1; // position of opening parenthesis/brace, if any
-    repeated Field list = 2; // field list; or nil
-    int64 closing = 3; // position of closing parenthesis/brace, if any
+// InputValueList represents a list of InputValues, enclosed by parentheses or braces.
+message InputValueList {
+    int64 opening = 1;
+    repeated InputValue list = 2;
+    int64 closing = 3;
 }
 
 // Exprs
@@ -232,13 +254,13 @@ message EnumType {
 // InputType represents an input type declaration.
 message InputType {
     int64 input = 1; // position of "input" keyword
-    FieldList fields = 2;
+    InputValueList fields = 2;
 }
 
 // DirectiveType represents a directive type declaration.
 message DirectiveType {
     int64 directive = 1; // position of "directive" keyword
-    FieldList args = 2; // defined args for the directive; or nil
+    InputValueList args = 2; // defined args for the directive; or nil
     int64 onPos = 3; // position of "on" keyword
     repeated DirectiveLocation locs = 4;
 }
