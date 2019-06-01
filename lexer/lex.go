@@ -503,7 +503,7 @@ func lexDef(l *lxr) stateFn {
 func lexDefContents(l *lxr) stateFn {
 declHead:
 	switch r := l.next(); r {
-	case eof:
+	case eof, '\r', '\n':
 		l.backup()
 		return lexDoc
 	case '#': // Comment
