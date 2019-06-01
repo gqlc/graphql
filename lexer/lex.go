@@ -537,7 +537,7 @@ declHead:
 				l.next()
 				l.ignoreSpace()
 			}
-			if r == eof || r == '@' || r == '{' {
+			if r == eof || r == '@' || r == '{' || r == '#' || r == '"' {
 				break
 			}
 
@@ -571,7 +571,7 @@ declHead:
 				l.next()
 				l.ignoreSpace()
 			}
-			if r == eof {
+			if r == eof || r == '#' || r == '"' {
 				break
 			}
 
