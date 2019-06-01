@@ -601,12 +601,13 @@ declHead:
 
 		for {
 			r := l.next()
+			if r == eof || r == '#' || r == '"' {
+				l.backup()
+				break
+			}
 			if r == '|' {
 				l.next()
 				l.ignoreSpace()
-			}
-			if r == eof {
-				break
 			}
 
 			loc := l.scanIdentifier()
@@ -770,14 +771,26 @@ func (l *lxr) scanArgDefs() bool {
 
 	for {
 		r := l.next()
-		if r == ')' {
+		switch r {
+		case eof:
+			l.backup()
+			return false
+		case ')':
 			l.emit(token.RPAREN)
 			return true
-		}
-
-		l.backup()
-		if r == eof {
-			return false
+		case '#':
+			for s := l.next(); s != '\r' && s != '\n' && s != eof; {
+				s = l.next()
+			}
+			l.emit(token.COMMENT)
+			l.ignoreWhiteSpace()
+		case '"':
+			l.backup()
+			if !l.scanString() {
+				return false
+			}
+			l.emit(token.DESCRIPTION)
+			l.ignoreWhiteSpace()
 		}
 
 		name := l.scanIdentifier()

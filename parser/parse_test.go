@@ -675,6 +675,20 @@ func TestParseDoc(t *testing.T) {
 	})
 }
 
+func TestParseDir(t *testing.T) {
+	docs, err := ParseDir(token.NewDocSet(), "./testdir", nil, 0)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	if len(docs) != 1 {
+		t.Log("expected 1 doc")
+		t.Fail()
+		return
+	}
+}
+
 func parse(name, src string) (*ast.Document, error) {
 	return ParseDoc(token.NewDocSet(), name, strings.NewReader(src), 0)
 }

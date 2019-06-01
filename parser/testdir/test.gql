@@ -31,17 +31,17 @@ type Test implements One & Two @one @two() @three(a: 1, b: 2) {
         """
         Arg description
         """
-        one: One = 1 @one,
+        one: One = 1 @one
 
         """
         Arg description
         """
-        two: Two = 2 @one @two(),
+        two: Two = 2 @one @two()
 
         """
         Arg description
         """
-        three: Three = 3 @one @two() @three(a: 1, b: 2),
+        three: Three = 3 @one @two() @three(a: 1, b: 2)
     ): Three @one @two() @three(a: 1, b: 2)
 }
 
@@ -63,17 +63,17 @@ interface Test @one @two() @three(a: 1, b: 2) {
         """
         Arg description
         """
-        one: One = 1 @one,
+        one: One = 1 @one
 
         """
         Arg description
         """
-        two: Two = 2 @one @two(),
+        two: Two = 2 @one @two()
 
         """
         Arg description
         """
-        three: Three = 3 @one @two() @three(a: 1, b: 2),
+        three: Three = 3 @one @two() @three(a: 1, b: 2)
     ): Three @one @two() @three(a: 1, b: 2)
 }
 
@@ -110,9 +110,9 @@ directive @test(
         """
         Arg description
         """
-        one: One = 1 @one,
+        one: One = 1 @one
         """
         Arg description
         """
-        two: Two = 2 @one @two,
+        two: Two = 2 @one @two
     ) on SCHEMA | QUERY | MUTATION | SUBSCRIPTION | FIELD

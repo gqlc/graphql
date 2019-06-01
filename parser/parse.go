@@ -27,6 +27,10 @@ const (
 // the documents found.
 //
 func ParseDir(dset *token.DocSet, path string, filter func(os.FileInfo) bool, mode Mode) (docs map[string]*ast.Document, err error) {
+	if filter == nil {
+		filter = func(os.FileInfo) bool { return false }
+	}
+
 	docs = make(map[string]*ast.Document)
 	err = filepath.Walk(path, func(p string, info os.FileInfo, e error) error {
 		skip := filter(info)
@@ -503,7 +507,7 @@ func (p *parser) parseValue() (v interface{}) {
 func (p *parser) parseFieldDefs(pdg *ast.DocGroup) (fields []*ast.Field, rpos int64) {
 	for {
 		cdg, item := p.addDocs(pdg)
-		if item.Typ == token.RPAREN || item.Typ == token.RBRACE {
+		if item.Typ == token.RBRACE {
 			rpos = int64(item.Pos)
 			return
 		}
