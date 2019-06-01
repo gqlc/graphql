@@ -171,12 +171,7 @@ func (e ErrUnexpectedItem) Error() string {
 
 // parse parses a GraphQL document
 func (p *parser) parse(doc *token.Doc, src []byte, mode Mode) (d *ast.Document, err error) {
-	var lMode lexer.Mode
-	if mode&ParseComments != 0 {
-		lMode = lexer.ScanComments
-	}
-
-	p.l = lexer.Lex(doc, src, lMode)
+	p.l = lexer.Lex(doc, string(src))
 	p.mode = mode
 
 	d = &ast.Document{
@@ -373,7 +368,7 @@ func (p *parser) parseArgs(pdg *ast.DocGroup) (args []*ast.Arg, rpos token.Pos) 
 		}
 
 		if item.Typ != token.IDENT {
-			p.unexpected(item, "parseArgs")
+			p.unexpected(item, "parseArgs:ArgName")
 		}
 		a := &ast.Arg{
 			Name: &ast.Ident{
@@ -383,7 +378,7 @@ func (p *parser) parseArgs(pdg *ast.DocGroup) (args []*ast.Arg, rpos token.Pos) 
 		}
 		args = append(args, a)
 
-		p.expect(token.COLON, "parseArgs")
+		p.expect(token.COLON, "parseArgs:MustHaveColon")
 
 		iVal := p.parseValue()
 		switch v := iVal.(type) {

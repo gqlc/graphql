@@ -3,7 +3,6 @@ package parser
 import (
 	"fmt"
 	"github.com/gqlc/graphql/ast"
-	"github.com/gqlc/graphql/lexer"
 	"github.com/gqlc/graphql/token"
 	"strings"
 	"testing"
@@ -668,7 +667,7 @@ func TestParseDoc(t *testing.T) {
 				return
 			}
 
-			if err.Error() != fmt.Sprintf("parser: %s: unexpected %s in parseExtension", "DirectiveExt:1", lexer.Item{Typ: token.DIRECTIVE, Val: "directive"}) {
+			if err.Error() != fmt.Sprintf("parser: %s: unexpected invalid type extension in parseExtension", "DirectiveExt:1") {
 				triT.Fail()
 				return
 			}
