@@ -68,7 +68,16 @@ func ParseDoc(dset *token.DocSet, name string, src io.Reader, mode Mode) (*ast.D
 
 	// Create parser and doc to doc set. Then, parse doc.
 	d := dset.AddDoc(name, -1, len(b))
-	p := &parser{name: name}
+	p := &parser{
+		name:   name,
+		dg:     make([]*ast.DocGroup_Doc, 0, 4),
+		cdg:    make([]*ast.DocGroup_Doc, 0, 4),
+		direcs: make([]*ast.DirectiveLit, 0, 4),
+		dargs:  make([]*ast.Arg, 0, 5),
+		fields: make([]*ast.Field, 0, 5),
+		args:   make([]*ast.InputValue, 0, 5),
+		fargs:  make([]*ast.InputValue, 0, 5),
+	}
 
 	return p.parse(d, b, mode)
 }
@@ -100,6 +109,13 @@ type parser struct {
 	mode Mode
 
 	schema *ast.TypeDecl
+
+	dg, cdg []*ast.DocGroup_Doc
+	direcs  []*ast.DirectiveLit
+	dargs   []*ast.Arg
+	fields  []*ast.Field
+
+	args, fargs []*ast.InputValue
 }
 
 // next returns the next token
@@ -307,6 +323,8 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 			p.unexpected(item, "parseDirectives")
 		}
 		if item.Typ == token.Token_EOF {
+			*directives = append(*directives, p.direcs...)
+			p.direcs = p.direcs[:0]
 			p.pk = item
 			return
 		}
@@ -317,7 +335,7 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 			AtPos: int64(item.Pos),
 			Name:  name.Val,
 		}
-		*directives = append(*directives, dir)
+		p.direcs = append(p.direcs, dir)
 
 		item = p.peek()
 		if item.Typ == token.Token_LPAREN {
@@ -332,6 +350,8 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 					p.unexpected(item, "parseDirectives:MalformedArg")
 				}
 				if item.Typ == token.Token_RPAREN {
+					dir.Args.Args = append(dir.Args.Args, p.dargs...)
+					p.dargs = p.dargs[:0]
 					break
 				}
 				if item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 {
@@ -355,7 +375,7 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 					arg.Value = &ast.Arg_CompositeLit{CompositeLit: v}
 				}
 
-				dir.Args.Args = append(dir.Args.Args, arg)
+				p.dargs = append(p.dargs, arg)
 			}
 
 			dir.Args.Rparen = int64(item.Pos)
@@ -364,6 +384,8 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 		}
 
 		if item.Typ != token.Token_AT || item.Line != p.line { // Enforce directives being on the same line
+			*directives = append(*directives, p.direcs...)
+			p.direcs = p.direcs[:0]
 			return
 		}
 	}
@@ -636,24 +658,18 @@ func (p *parser) parseSchema(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc,
 }
 
 func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) int64 {
-	var fdocs []*ast.DocGroup_Doc
-	var args []*ast.InputValue
 	for {
 		item := p.next()
 		switch {
 		case item.Typ == token.Token_RBRACE:
+			*fields = append(*fields, p.fields...)
+			p.fields = p.fields[:0]
 			return int64(item.Pos)
 		case item.Typ == token.Token_IDENT || item.Typ.IsKeyword():
 			f := &ast.Field{
 				Name: &ast.Ident{NamePos: int64(item.Pos), Name: item.Val},
 			}
-			*fields = append(*fields, f)
-
-			if dLen := len(fdocs); dLen > 0 {
-				f.Doc = &ast.DocGroup{List: make([]*ast.DocGroup_Doc, dLen)}
-				copy(f.Doc.List, fdocs)
-				fdocs = fdocs[:0]
-			}
+			p.fields = append(p.fields, f)
 
 			item = p.peek()
 			if item.Typ == token.Token_LPAREN {
@@ -662,11 +678,11 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 					Opening: int64(item.Pos),
 				}
 
-				f.Args.Closing = p.parseArgDefs(&fdocs, &args)
-				if aLen := len(args); aLen > 0 {
+				f.Args.Closing = p.parseArgDefs(&p.dg, &p.fargs)
+				if aLen := len(p.fargs); aLen > 0 {
 					f.Args.List = make([]*ast.InputValue, aLen)
-					copy(f.Args.List, args)
-					args = args[:0]
+					copy(f.Args.List, p.fargs)
+					p.fargs = p.fargs[:0]
 				}
 
 				item = p.peek()
@@ -675,6 +691,12 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 				p.unexpected(item, "parseFields:ExpectedColon")
 			}
 			p.ignore()
+
+			if dLen := len(p.dg); dLen > 0 {
+				f.Doc = &ast.DocGroup{List: make([]*ast.DocGroup_Doc, dLen)}
+				copy(f.Doc.List, p.dg)
+				p.dg = p.dg[:0]
+			}
 
 			typ := p.parseType()
 			switch v := typ.(type) {
@@ -701,21 +723,21 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 				d.Comment = true
 			}
 
-			if len(fdocs) == 0 {
-				fdocs = append(fdocs, d)
+			if len(p.dg) == 0 {
+				p.dg = append(p.dg, d)
 				break
 			}
 
-			prev := fdocs[len(fdocs)-1]
+			prev := p.dg[len(p.dg)-1]
 			lprev := p.doc.Line(token.Pos(int(prev.Char) + len(prev.Text)))
 			if p.doc.Line(token.Pos(d.Char))-lprev == 1 {
-				fdocs = append(fdocs, d)
+				p.dg = append(p.dg, d)
 				break
 			}
 
-			*docs = append(*docs, fdocs...)
-			fdocs = fdocs[:0]
-			fdocs = append(fdocs, d)
+			*docs = append(*docs, p.dg...)
+			p.dg = p.dg[:0]
+			p.dg = append(p.dg, d)
 		default:
 			p.unexpected(item, "parseFields")
 		}
@@ -723,22 +745,23 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 }
 
 func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue) int64 {
-	var adocs []*ast.DocGroup_Doc
 	for {
 		item := p.next()
 		switch {
 		case item.Typ == token.Token_RPAREN || item.Typ == token.Token_RBRACE:
+			*args = append(*args, p.args...)
+			p.args = p.args[:0]
 			return int64(item.Pos)
 		case item.Typ == token.Token_IDENT || item.Typ.IsKeyword():
 			arg := &ast.InputValue{
 				Name: &ast.Ident{NamePos: int64(item.Pos), Name: item.Val},
 			}
-			*args = append(*args, arg)
+			p.args = append(p.args, arg)
 
-			if dLen := len(adocs); dLen > 0 {
+			if dLen := len(p.cdg); dLen > 0 {
 				arg.Doc = &ast.DocGroup{List: make([]*ast.DocGroup_Doc, dLen)}
-				copy(arg.Doc.List, adocs)
-				adocs = adocs[:0]
+				copy(arg.Doc.List, p.cdg)
+				p.cdg = p.cdg[:0]
 			}
 
 			p.expect(token.Token_COLON, "parseArgDefs:ExpectedColon")
@@ -782,21 +805,21 @@ func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue
 				d.Comment = true
 			}
 
-			if len(adocs) == 0 {
-				adocs = append(adocs, d)
+			if len(p.cdg) == 0 {
+				p.cdg = append(p.cdg, d)
 				break
 			}
 
-			prev := adocs[len(adocs)-1]
+			prev := p.cdg[len(p.cdg)-1]
 			lprev := p.doc.Line(token.Pos(int(prev.Char) + len(prev.Text)))
 			if p.doc.Line(token.Pos(d.Char))-lprev == 1 {
-				adocs = append(adocs, d)
+				p.cdg = append(p.cdg, d)
 				break
 			}
 
-			*docs = append(*docs, adocs...)
-			adocs = adocs[:0]
-			adocs = append(adocs, d)
+			*docs = append(*docs, p.cdg...)
+			p.cdg = p.cdg[:0]
+			p.cdg = append(p.cdg, d)
 		default:
 			p.unexpected(item, "parseArgDefs")
 		}
@@ -804,42 +827,26 @@ func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue
 }
 
 func (p *parser) parseEnumValues(docs *[]*ast.DocGroup_Doc, values *[]*ast.Field) int64 {
-	var fdocs []*ast.DocGroup_Doc
-	var args []*ast.InputValue
 	for {
 		item := p.next()
 		switch {
 		case item.Typ == token.Token_RBRACE:
+			*values = append(*values, p.fields...)
+			p.fields = p.fields[:0]
 			return int64(item.Pos)
 		case item.Typ == token.Token_IDENT || item.Typ.IsKeyword():
 			f := &ast.Field{
 				Name: &ast.Ident{NamePos: int64(item.Pos), Name: item.Val},
 			}
-			*values = append(*values, f)
+			p.fields = append(p.fields, f)
 
-			if dLen := len(fdocs); dLen > 0 {
+			if dLen := len(p.dg); dLen > 0 {
 				f.Doc = &ast.DocGroup{List: make([]*ast.DocGroup_Doc, dLen)}
-				copy(f.Doc.List, fdocs)
-				fdocs = fdocs[:0]
+				copy(f.Doc.List, p.dg)
+				p.dg = p.dg[:0]
 			}
 
 			item = p.peek()
-			if item.Typ == token.Token_LPAREN {
-				p.ignore()
-				f.Args = &ast.InputValueList{
-					Opening: int64(item.Pos),
-				}
-
-				f.Args.Closing = p.parseArgDefs(&fdocs, &args)
-				if aLen := len(args); aLen > 0 {
-					f.Args.List = make([]*ast.InputValue, aLen)
-					copy(f.Args.List, args)
-					args = args[:0]
-				}
-
-				item = p.peek()
-			}
-
 			if item.Typ == token.Token_AT {
 				p.parseDirectives(&f.Directives)
 			}
@@ -853,21 +860,21 @@ func (p *parser) parseEnumValues(docs *[]*ast.DocGroup_Doc, values *[]*ast.Field
 				d.Comment = true
 			}
 
-			if len(fdocs) == 0 {
-				fdocs = append(fdocs, d)
+			if len(p.dg) == 0 {
+				p.dg = append(p.dg, d)
 				break
 			}
 
-			prev := fdocs[len(fdocs)-1]
+			prev := p.dg[len(p.dg)-1]
 			lprev := p.doc.Line(token.Pos(int(prev.Char) + len(prev.Text)))
 			if p.doc.Line(token.Pos(d.Char))-lprev == 1 {
-				fdocs = append(fdocs, d)
+				p.dg = append(p.dg, d)
 				break
 			}
 
-			*docs = append(*docs, fdocs...)
-			fdocs = fdocs[:0]
-			fdocs = append(fdocs, d)
+			*docs = append(*docs, p.dg...)
+			p.dg = p.dg[:0]
+			p.dg = append(p.dg, d)
 		default:
 			p.unexpected(item, "parseEnumValues")
 		}
