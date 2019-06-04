@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package gqlc.protobuf;
+
+option go_package = "github.com/gqlc/graphql/token;token";
+
+// Token contains all the lexical tokens for the GraphQL IDL
+enum Token {
+    UNKNOWN = 0;
+    ERR = 1;
+    EOF = 2;
+    COMMENT = 3;
+    DESCRIPTION = 4;
+
+    IDENT = 5;  // query
+    STRING = 6; // "abc" or """abc"""
+    INT = 7;    // 123
+    FLOAT = 8;  // 123.45
+    BOOL = 9;   // true or false
+    NULL = 10;   // null
+
+    AND = 11; // &
+    OR = 12;  // |
+    NOT = 13; // !
+    AT = 14;  // @
+    VAR = 15; // $
+
+    ASSIGN = 16; // =
+    LPAREN = 17; // (
+    LBRACK = 18; // [
+    LBRACE = 19; // {
+    COMMA = 20;  // ,
+
+    PERIOD = 21; // .
+    RPAREN = 22; // )
+    RBRACK = 23; // ]
+    RBRACE = 24; // }
+    COLON = 25;  // :
+
+    PACKAGE = 26;
+    SCHEMA = 27;
+    TYPE = 28;
+    SCALAR = 29;
+    ENUM = 30;
+    INTERFACE = 31;
+    IMPLEMENTS = 32;
+    UNION = 33;
+    INPUT = 34;
+    EXTEND = 35;
+    DIRECTIVE = 36;
+    ON = 37;
+}

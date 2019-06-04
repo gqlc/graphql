@@ -1,0 +1,1452 @@
+{
+  "name": "test",
+  "schema": {
+    "doc": {
+      "list": [
+        {
+          "text": "\"Schema description\"",
+          "char": "1"
+        }
+      ]
+    },
+    "tokPos": "22",
+    "tok": 27,
+    "typeSpec": {
+      "schema": {
+        "schema": "22",
+        "rootOps": {
+          "opening": "56",
+          "list": [
+            {
+              "doc": {
+                "list": [
+                  {
+                    "text": "\"Query description\"",
+                    "char": "62"
+                  }
+                ]
+              },
+              "name": {
+                "namePos": "86",
+                "name": "query"
+              },
+              "ident": {
+                "namePos": "93",
+                "name": "Query"
+              }
+            },
+            {
+              "doc": {
+                "list": [
+                  {
+                    "text": "\"Mutation description\"",
+                    "char": "104"
+                  }
+                ]
+              },
+              "name": {
+                "namePos": "131",
+                "name": "mutation"
+              },
+              "ident": {
+                "namePos": "141",
+                "name": "Mutation"
+              }
+            },
+            {
+              "doc": {
+                "list": [
+                  {
+                    "text": "\"Subscription description\"",
+                    "char": "155"
+                  }
+                ]
+              },
+              "name": {
+                "namePos": "186",
+                "name": "subscription"
+              },
+              "ident": {
+                "namePos": "200",
+                "name": "Subscription"
+              }
+            }
+          ],
+          "closing": "213"
+        }
+      },
+      "directives": [
+        {
+          "atPos": "29",
+          "name": "one"
+        },
+        {
+          "atPos": "34",
+          "name": "two",
+          "args": {
+            "lparen": "38",
+            "rparen": "39"
+          }
+        },
+        {
+          "atPos": "41",
+          "name": "three",
+          "args": {
+            "lparen": "47",
+            "args": [
+              {
+                "name": {
+                  "namePos": "48",
+                  "name": "a"
+                },
+                "basicLit": {
+                  "valuePos": "51",
+                  "kind": 6,
+                  "value": "\"A\""
+                }
+              }
+            ],
+            "rparen": "54"
+          }
+        }
+      ]
+    }
+  },
+  "types": [
+    {
+      "doc": {
+        "list": [
+          {
+            "text": "\"Schema description\"",
+            "char": "1"
+          }
+        ]
+      },
+      "tokPos": "22",
+      "tok": 27,
+      "typeSpec": {
+        "schema": {
+          "schema": "22",
+          "rootOps": {
+            "opening": "56",
+            "list": [
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Query description\"",
+                      "char": "62"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "86",
+                  "name": "query"
+                },
+                "ident": {
+                  "namePos": "93",
+                  "name": "Query"
+                }
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Mutation description\"",
+                      "char": "104"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "131",
+                  "name": "mutation"
+                },
+                "ident": {
+                  "namePos": "141",
+                  "name": "Mutation"
+                }
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Subscription description\"",
+                      "char": "155"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "186",
+                  "name": "subscription"
+                },
+                "ident": {
+                  "namePos": "200",
+                  "name": "Subscription"
+                }
+              }
+            ],
+            "closing": "213"
+          }
+        },
+        "directives": [
+          {
+            "atPos": "29",
+            "name": "one"
+          },
+          {
+            "atPos": "34",
+            "name": "two",
+            "args": {
+              "lparen": "38",
+              "rparen": "39"
+            }
+          },
+          {
+            "atPos": "41",
+            "name": "three",
+            "args": {
+              "lparen": "47",
+              "args": [
+                {
+                  "name": {
+                    "namePos": "48",
+                    "name": "a"
+                  },
+                  "basicLit": {
+                    "valuePos": "51",
+                    "kind": 6,
+                    "value": "\"A\""
+                  }
+                }
+              ],
+              "rparen": "54"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "doc": {
+        "list": [
+          {
+            "text": "\"Scalar description\"",
+            "char": "216"
+          }
+        ]
+      },
+      "tokPos": "237",
+      "tok": 29,
+      "typeSpec": {
+        "name": {
+          "namePos": "244",
+          "name": "Test"
+        },
+        "scalar": {
+          "scalar": "237",
+          "name": {
+            "namePos": "244",
+            "name": "Test"
+          }
+        },
+        "directives": [
+          {
+            "atPos": "249",
+            "name": "one"
+          },
+          {
+            "atPos": "254",
+            "name": "two",
+            "args": {
+              "lparen": "258",
+              "rparen": "259"
+            }
+          },
+          {
+            "atPos": "261",
+            "name": "three",
+            "args": {
+              "lparen": "267",
+              "args": [
+                {
+                  "name": {
+                    "namePos": "268",
+                    "name": "a"
+                  },
+                  "basicLit": {
+                    "valuePos": "271",
+                    "kind": 7,
+                    "value": "1"
+                  }
+                },
+                {
+                  "name": {
+                    "namePos": "274",
+                    "name": "b"
+                  },
+                  "basicLit": {
+                    "valuePos": "277",
+                    "kind": 7,
+                    "value": "2"
+                  }
+                },
+                {
+                  "name": {
+                    "namePos": "280",
+                    "name": "c"
+                  },
+                  "basicLit": {
+                    "valuePos": "283",
+                    "kind": 7,
+                    "value": "3"
+                  }
+                }
+              ],
+              "rparen": "284"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "doc": {
+        "list": [
+          {
+            "text": "\"Object description\"",
+            "char": "287"
+          }
+        ]
+      },
+      "tokPos": "308",
+      "tok": 28,
+      "typeSpec": {
+        "name": {
+          "namePos": "313",
+          "name": "Test"
+        },
+        "object": {
+          "object": "308",
+          "implPos": "318",
+          "interfaces": [
+            {
+              "namePos": "329",
+              "name": "One"
+            },
+            {
+              "namePos": "335",
+              "name": "Two"
+            }
+          ],
+          "fields": {
+            "opening": "370",
+            "list": [
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Field description\"",
+                      "char": "376"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "400",
+                  "name": "one"
+                },
+                "ident": {
+                  "namePos": "405",
+                  "name": "One"
+                }
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Field description\"",
+                      "char": "414"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "438",
+                  "name": "two"
+                },
+                "args": {
+                  "opening": "441",
+                  "list": [
+                    {
+                      "doc": {
+                        "list": [
+                          {
+                            "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                            "char": "451"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "namePos": "499",
+                        "name": "one"
+                      },
+                      "ident": {
+                        "namePos": "504",
+                        "name": "One"
+                      },
+                      "basicLit": {
+                        "valuePos": "510",
+                        "kind": 7,
+                        "value": "1"
+                      },
+                      "directives": [
+                        {
+                          "atPos": "512",
+                          "name": "one"
+                        }
+                      ]
+                    }
+                  ],
+                  "closing": "521"
+                },
+                "ident": {
+                  "namePos": "524",
+                  "name": "Two"
+                },
+                "directives": [
+                  {
+                    "atPos": "528",
+                    "name": "one"
+                  },
+                  {
+                    "atPos": "533",
+                    "name": "two"
+                  }
+                ]
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Field description\"",
+                      "char": "543"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "567",
+                  "name": "three"
+                },
+                "args": {
+                  "opening": "572",
+                  "list": [
+                    {
+                      "doc": {
+                        "list": [
+                          {
+                            "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                            "char": "582"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "namePos": "630",
+                        "name": "one"
+                      },
+                      "ident": {
+                        "namePos": "635",
+                        "name": "One"
+                      },
+                      "basicLit": {
+                        "valuePos": "641",
+                        "kind": 7,
+                        "value": "1"
+                      },
+                      "directives": [
+                        {
+                          "atPos": "643",
+                          "name": "one"
+                        }
+                      ]
+                    },
+                    {
+                      "doc": {
+                        "list": [
+                          {
+                            "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                            "char": "657"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "namePos": "705",
+                        "name": "two"
+                      },
+                      "ident": {
+                        "namePos": "710",
+                        "name": "Two"
+                      },
+                      "basicLit": {
+                        "valuePos": "716",
+                        "kind": 7,
+                        "value": "2"
+                      },
+                      "directives": [
+                        {
+                          "atPos": "718",
+                          "name": "one"
+                        },
+                        {
+                          "atPos": "723",
+                          "name": "two",
+                          "args": {
+                            "lparen": "727",
+                            "rparen": "728"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "doc": {
+                        "list": [
+                          {
+                            "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                            "char": "739"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "namePos": "787",
+                        "name": "three"
+                      },
+                      "ident": {
+                        "namePos": "794",
+                        "name": "Three"
+                      },
+                      "basicLit": {
+                        "valuePos": "802",
+                        "kind": 7,
+                        "value": "3"
+                      },
+                      "directives": [
+                        {
+                          "atPos": "804",
+                          "name": "one"
+                        },
+                        {
+                          "atPos": "809",
+                          "name": "two",
+                          "args": {
+                            "lparen": "813",
+                            "rparen": "814"
+                          }
+                        },
+                        {
+                          "atPos": "816",
+                          "name": "three",
+                          "args": {
+                            "lparen": "822",
+                            "args": [
+                              {
+                                "name": {
+                                  "namePos": "823",
+                                  "name": "a"
+                                },
+                                "basicLit": {
+                                  "valuePos": "826",
+                                  "kind": 7,
+                                  "value": "1"
+                                }
+                              },
+                              {
+                                "name": {
+                                  "namePos": "829",
+                                  "name": "b"
+                                },
+                                "basicLit": {
+                                  "valuePos": "832",
+                                  "kind": 7,
+                                  "value": "2"
+                                }
+                              }
+                            ],
+                            "rparen": "833"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "closing": "839"
+                },
+                "ident": {
+                  "namePos": "842",
+                  "name": "Three"
+                },
+                "directives": [
+                  {
+                    "atPos": "848",
+                    "name": "one"
+                  },
+                  {
+                    "atPos": "853",
+                    "name": "two",
+                    "args": {
+                      "lparen": "857",
+                      "rparen": "858"
+                    }
+                  },
+                  {
+                    "atPos": "860",
+                    "name": "three",
+                    "args": {
+                      "lparen": "866",
+                      "args": [
+                        {
+                          "name": {
+                            "namePos": "867",
+                            "name": "a"
+                          },
+                          "basicLit": {
+                            "valuePos": "870",
+                            "kind": 7,
+                            "value": "1"
+                          }
+                        },
+                        {
+                          "name": {
+                            "namePos": "873",
+                            "name": "b"
+                          },
+                          "basicLit": {
+                            "valuePos": "876",
+                            "kind": 7,
+                            "value": "2"
+                          }
+                        }
+                      ],
+                      "rparen": "877"
+                    }
+                  }
+                ]
+              }
+            ],
+            "closing": "879"
+          }
+        },
+        "directives": [
+          {
+            "atPos": "339",
+            "name": "one"
+          },
+          {
+            "atPos": "344",
+            "name": "two",
+            "args": {
+              "lparen": "348",
+              "rparen": "349"
+            }
+          },
+          {
+            "atPos": "351",
+            "name": "three",
+            "args": {
+              "lparen": "357",
+              "args": [
+                {
+                  "name": {
+                    "namePos": "358",
+                    "name": "a"
+                  },
+                  "basicLit": {
+                    "valuePos": "361",
+                    "kind": 7,
+                    "value": "1"
+                  }
+                },
+                {
+                  "name": {
+                    "namePos": "364",
+                    "name": "b"
+                  },
+                  "basicLit": {
+                    "valuePos": "367",
+                    "kind": 7,
+                    "value": "2"
+                  }
+                }
+              ],
+              "rparen": "368"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "doc": {
+        "list": [
+          {
+            "text": "\"Interface description\"",
+            "char": "882"
+          }
+        ]
+      },
+      "tokPos": "906",
+      "tok": 31,
+      "typeSpec": {
+        "name": {
+          "namePos": "916",
+          "name": "Test"
+        },
+        "interface": {
+          "interface": "906",
+          "fields": {
+            "opening": "952",
+            "list": [
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Field description\"",
+                      "char": "958"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "982",
+                  "name": "one"
+                },
+                "ident": {
+                  "namePos": "987",
+                  "name": "One"
+                }
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Field description\"",
+                      "char": "996"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "1020",
+                  "name": "two"
+                },
+                "args": {
+                  "opening": "1023",
+                  "list": [
+                    {
+                      "doc": {
+                        "list": [
+                          {
+                            "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                            "char": "1033"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "namePos": "1081",
+                        "name": "one"
+                      },
+                      "ident": {
+                        "namePos": "1086",
+                        "name": "One"
+                      },
+                      "basicLit": {
+                        "valuePos": "1092",
+                        "kind": 7,
+                        "value": "1"
+                      },
+                      "directives": [
+                        {
+                          "atPos": "1094",
+                          "name": "one"
+                        }
+                      ]
+                    }
+                  ],
+                  "closing": "1103"
+                },
+                "ident": {
+                  "namePos": "1106",
+                  "name": "Two"
+                },
+                "directives": [
+                  {
+                    "atPos": "1110",
+                    "name": "one"
+                  },
+                  {
+                    "atPos": "1115",
+                    "name": "two"
+                  }
+                ]
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Field description\"",
+                      "char": "1125"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "1149",
+                  "name": "three"
+                },
+                "args": {
+                  "opening": "1154",
+                  "list": [
+                    {
+                      "doc": {
+                        "list": [
+                          {
+                            "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                            "char": "1164"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "namePos": "1212",
+                        "name": "one"
+                      },
+                      "ident": {
+                        "namePos": "1217",
+                        "name": "One"
+                      },
+                      "basicLit": {
+                        "valuePos": "1223",
+                        "kind": 7,
+                        "value": "1"
+                      },
+                      "directives": [
+                        {
+                          "atPos": "1225",
+                          "name": "one"
+                        }
+                      ]
+                    },
+                    {
+                      "doc": {
+                        "list": [
+                          {
+                            "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                            "char": "1239"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "namePos": "1287",
+                        "name": "two"
+                      },
+                      "ident": {
+                        "namePos": "1292",
+                        "name": "Two"
+                      },
+                      "basicLit": {
+                        "valuePos": "1298",
+                        "kind": 7,
+                        "value": "2"
+                      },
+                      "directives": [
+                        {
+                          "atPos": "1300",
+                          "name": "one"
+                        },
+                        {
+                          "atPos": "1305",
+                          "name": "two",
+                          "args": {
+                            "lparen": "1309",
+                            "rparen": "1310"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "doc": {
+                        "list": [
+                          {
+                            "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                            "char": "1321"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "namePos": "1369",
+                        "name": "three"
+                      },
+                      "ident": {
+                        "namePos": "1376",
+                        "name": "Three"
+                      },
+                      "basicLit": {
+                        "valuePos": "1384",
+                        "kind": 7,
+                        "value": "3"
+                      },
+                      "directives": [
+                        {
+                          "atPos": "1386",
+                          "name": "one"
+                        },
+                        {
+                          "atPos": "1391",
+                          "name": "two",
+                          "args": {
+                            "lparen": "1395",
+                            "rparen": "1396"
+                          }
+                        },
+                        {
+                          "atPos": "1398",
+                          "name": "three",
+                          "args": {
+                            "lparen": "1404",
+                            "args": [
+                              {
+                                "name": {
+                                  "namePos": "1405",
+                                  "name": "a"
+                                },
+                                "basicLit": {
+                                  "valuePos": "1408",
+                                  "kind": 7,
+                                  "value": "1"
+                                }
+                              },
+                              {
+                                "name": {
+                                  "namePos": "1411",
+                                  "name": "b"
+                                },
+                                "basicLit": {
+                                  "valuePos": "1414",
+                                  "kind": 7,
+                                  "value": "2"
+                                }
+                              }
+                            ],
+                            "rparen": "1415"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "closing": "1421"
+                },
+                "ident": {
+                  "namePos": "1424",
+                  "name": "Three"
+                },
+                "directives": [
+                  {
+                    "atPos": "1430",
+                    "name": "one"
+                  },
+                  {
+                    "atPos": "1435",
+                    "name": "two",
+                    "args": {
+                      "lparen": "1439",
+                      "rparen": "1440"
+                    }
+                  },
+                  {
+                    "atPos": "1442",
+                    "name": "three",
+                    "args": {
+                      "lparen": "1448",
+                      "args": [
+                        {
+                          "name": {
+                            "namePos": "1449",
+                            "name": "a"
+                          },
+                          "basicLit": {
+                            "valuePos": "1452",
+                            "kind": 7,
+                            "value": "1"
+                          }
+                        },
+                        {
+                          "name": {
+                            "namePos": "1455",
+                            "name": "b"
+                          },
+                          "basicLit": {
+                            "valuePos": "1458",
+                            "kind": 7,
+                            "value": "2"
+                          }
+                        }
+                      ],
+                      "rparen": "1459"
+                    }
+                  }
+                ]
+              }
+            ],
+            "closing": "1461"
+          }
+        },
+        "directives": [
+          {
+            "atPos": "921",
+            "name": "one"
+          },
+          {
+            "atPos": "926",
+            "name": "two",
+            "args": {
+              "lparen": "930",
+              "rparen": "931"
+            }
+          },
+          {
+            "atPos": "933",
+            "name": "three",
+            "args": {
+              "lparen": "939",
+              "args": [
+                {
+                  "name": {
+                    "namePos": "940",
+                    "name": "a"
+                  },
+                  "basicLit": {
+                    "valuePos": "943",
+                    "kind": 7,
+                    "value": "1"
+                  }
+                },
+                {
+                  "name": {
+                    "namePos": "946",
+                    "name": "b"
+                  },
+                  "basicLit": {
+                    "valuePos": "949",
+                    "kind": 7,
+                    "value": "2"
+                  }
+                }
+              ],
+              "rparen": "950"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "doc": {
+        "list": [
+          {
+            "text": "\"Union description\"",
+            "char": "1464"
+          }
+        ]
+      },
+      "tokPos": "1484",
+      "tok": 33,
+      "typeSpec": {
+        "name": {
+          "namePos": "1490",
+          "name": "Test"
+        },
+        "union": {
+          "union": "1484",
+          "members": [
+            {
+              "namePos": "1528",
+              "name": "One"
+            },
+            {
+              "namePos": "1534",
+              "name": "Two"
+            },
+            {
+              "namePos": "1540",
+              "name": "Three"
+            }
+          ]
+        },
+        "directives": [
+          {
+            "atPos": "1495",
+            "name": "one"
+          },
+          {
+            "atPos": "1500",
+            "name": "two",
+            "args": {
+              "lparen": "1504",
+              "rparen": "1505"
+            }
+          },
+          {
+            "atPos": "1507",
+            "name": "three",
+            "args": {
+              "lparen": "1513",
+              "args": [
+                {
+                  "name": {
+                    "namePos": "1514",
+                    "name": "a"
+                  },
+                  "basicLit": {
+                    "valuePos": "1517",
+                    "kind": 7,
+                    "value": "1"
+                  }
+                },
+                {
+                  "name": {
+                    "namePos": "1520",
+                    "name": "b"
+                  },
+                  "basicLit": {
+                    "valuePos": "1523",
+                    "kind": 7,
+                    "value": "2"
+                  }
+                }
+              ],
+              "rparen": "1524"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "doc": {
+        "list": [
+          {
+            "text": "\"Enum description\"",
+            "char": "1547"
+          }
+        ]
+      },
+      "tokPos": "1566",
+      "tok": 30,
+      "typeSpec": {
+        "name": {
+          "namePos": "1571",
+          "name": "Test"
+        },
+        "enum": {
+          "enum": "1566",
+          "values": {
+            "opening": "1586",
+            "list": [
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"One before\"",
+                      "char": "1592"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "1605",
+                  "name": "ONE"
+                },
+                "directives": [
+                  {
+                    "atPos": "1609",
+                    "name": "one"
+                  }
+                ]
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"\"\"\n    Two above\n    \"\"\"",
+                      "char": "1619"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "1649",
+                  "name": "TWO"
+                },
+                "directives": [
+                  {
+                    "atPos": "1653",
+                    "name": "one"
+                  },
+                  {
+                    "atPos": "1658",
+                    "name": "two"
+                  }
+                ]
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"Three above\"",
+                      "char": "1668"
+                    },
+                    {
+                      "text": "\"Three before\"",
+                      "char": "1686"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "1701",
+                  "name": "THREE"
+                },
+                "directives": [
+                  {
+                    "atPos": "1707",
+                    "name": "one"
+                  },
+                  {
+                    "atPos": "1712",
+                    "name": "two"
+                  },
+                  {
+                    "atPos": "1717",
+                    "name": "three"
+                  }
+                ]
+              }
+            ],
+            "closing": "1724"
+          }
+        },
+        "directives": [
+          {
+            "atPos": "1576",
+            "name": "one"
+          },
+          {
+            "atPos": "1581",
+            "name": "two"
+          }
+        ]
+      }
+    },
+    {
+      "doc": {
+        "list": [
+          {
+            "text": "\"Input description\"",
+            "char": "1727"
+          }
+        ]
+      },
+      "tokPos": "1747",
+      "tok": 34,
+      "typeSpec": {
+        "name": {
+          "namePos": "1753",
+          "name": "Test"
+        },
+        "input": {
+          "input": "1747",
+          "fields": {
+            "opening": "1768",
+            "list": [
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"One above\"",
+                      "char": "1774"
+                    },
+                    {
+                      "text": "\"One before\"",
+                      "char": "1790"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "1803",
+                  "name": "one"
+                },
+                "ident": {
+                  "namePos": "1808",
+                  "name": "One"
+                },
+                "directives": [
+                  {
+                    "atPos": "1812",
+                    "name": "one"
+                  }
+                ]
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"\"\"\n    Two multi above\n    \"\"\"",
+                      "char": "1822"
+                    },
+                    {
+                      "text": "\"Two single above\"",
+                      "char": "1858"
+                    },
+                    {
+                      "text": "\"Two before\"",
+                      "char": "1878"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "1891",
+                  "name": "two"
+                },
+                "ident": {
+                  "namePos": "1896",
+                  "name": "Two"
+                },
+                "basicLit": {
+                  "valuePos": "1902",
+                  "kind": 7,
+                  "value": "2"
+                },
+                "directives": [
+                  {
+                    "atPos": "1904",
+                    "name": "one"
+                  },
+                  {
+                    "atPos": "1909",
+                    "name": "two"
+                  }
+                ]
+              }
+            ],
+            "closing": "1914"
+          }
+        },
+        "directives": [
+          {
+            "atPos": "1758",
+            "name": "one"
+          },
+          {
+            "atPos": "1763",
+            "name": "two"
+          }
+        ]
+      }
+    },
+    {
+      "doc": {
+        "list": [
+          {
+            "text": "\"Directive description\"",
+            "char": "1917"
+          }
+        ]
+      },
+      "tokPos": "1941",
+      "tok": 36,
+      "typeSpec": {
+        "name": {
+          "namePos": "1952",
+          "name": "test"
+        },
+        "directive": {
+          "directive": "1941",
+          "args": {
+            "opening": "1956",
+            "list": [
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                      "char": "1966"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "2014",
+                  "name": "one"
+                },
+                "ident": {
+                  "namePos": "2019",
+                  "name": "One"
+                },
+                "basicLit": {
+                  "valuePos": "2025",
+                  "kind": 7,
+                  "value": "1"
+                },
+                "directives": [
+                  {
+                    "atPos": "2027",
+                    "name": "one"
+                  }
+                ]
+              },
+              {
+                "doc": {
+                  "list": [
+                    {
+                      "text": "\"\"\"\n        Arg description\n        \"\"\"",
+                      "char": "2040"
+                    }
+                  ]
+                },
+                "name": {
+                  "namePos": "2088",
+                  "name": "two"
+                },
+                "ident": {
+                  "namePos": "2093",
+                  "name": "Two"
+                },
+                "basicLit": {
+                  "valuePos": "2099",
+                  "kind": 7,
+                  "value": "2"
+                },
+                "directives": [
+                  {
+                    "atPos": "2101",
+                    "name": "one"
+                  },
+                  {
+                    "atPos": "2106",
+                    "name": "two"
+                  }
+                ]
+              }
+            ],
+            "closing": "2115"
+          },
+          "onPos": "2117",
+          "locs": [
+            {
+              "start": "2120",
+              "loc": 10
+            },
+            {
+              "start": "2129",
+              "loc": 1
+            },
+            {
+              "start": "2137",
+              "loc": 2
+            },
+            {
+              "start": "2148",
+              "loc": 3
+            },
+            {
+              "start": "2163",
+              "loc": 4
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

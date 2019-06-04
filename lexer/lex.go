@@ -20,11 +20,11 @@ type Item struct {
 
 func (i Item) String() string {
 	switch {
-	case i.Typ == token.EOF:
+	case i.Typ == token.Token_EOF:
 		return "EOF"
-	case i.Typ == token.ERR:
+	case i.Typ == token.Token_ERR:
 		return i.Val
-	case i.Typ >= token.PACKAGE:
+	case i.Typ >= token.Token_PACKAGE:
 		return fmt.Sprintf("<%s>", i.Val)
 	case len(i.Val) > 10:
 		return fmt.Sprintf("%.10q...", i.Val)
@@ -48,12 +48,11 @@ type lxr struct {
 	src  string
 
 	// scanning state
-	pos       int
-	start     int
-	width     int
-	line      int
-	startLine int
-	items     chan Item
+	pos   int
+	start int
+	width int
+	line  int
+	items chan Item
 }
 
 // Lex lexs the given src based on the the GraphQL IDL specification.
@@ -103,6 +102,7 @@ func (l *lxr) next() rune {
 	l.width = w
 	l.pos += l.width
 	if r == '\n' {
+		l.doc.AddLine(l.pos)
 		l.line++
 	}
 	return r
@@ -129,7 +129,6 @@ func (l *lxr) backup() {
 func (l *lxr) emit(t token.Token) {
 	l.items <- Item{l.doc.Pos(l.start), l.line, t, l.src[l.start:l.pos]}
 	l.start = l.pos
-	l.startLine = l.line
 }
 
 // ignore skips over the pending src before this point.
@@ -156,7 +155,7 @@ func (l *lxr) acceptRun(valid string) {
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lxr) errorf(format string, args ...interface{}) stateFn {
-	l.items <- Item{l.doc.Pos(l.start), l.line, token.ERR, fmt.Sprintf(format, args...)}
+	l.items <- Item{l.doc.Pos(l.start), l.line, token.Token_ERR, fmt.Sprintf(format, args...)}
 	return nil
 }
 
@@ -197,7 +196,7 @@ func lexDoc(l *lxr) stateFn {
 		if l.pos > l.start {
 			return l.errorf("unexpected eof")
 		}
-		l.emit(token.EOF)
+		l.emit(token.Token_EOF)
 		return nil
 	case r == ' ', r == '\t', r == '\r', r == '\n':
 		l.ignoreWhiteSpace()
@@ -205,13 +204,13 @@ func lexDoc(l *lxr) stateFn {
 		for s := l.next(); s != '\r' && s != '\n' && s != eof; {
 			s = l.next()
 		}
-		l.emit(token.COMMENT)
+		l.emit(token.Token_COMMENT)
 	case r == '"':
 		l.backup()
 		if !l.scanString() {
 			return l.errorf("bad string syntax: %s", l.src[l.start:l.pos])
 		}
-		l.emit(token.DESCRIPTION)
+		l.emit(token.Token_DESCRIPTION)
 	case r == '@':
 		l.backup()
 		return l.scanDirectives(lexDoc)
@@ -230,10 +229,10 @@ func (l *lxr) scanDirectives(parent stateFn) stateFn {
 			l.backup()
 			return parent
 		}
-		l.emit(token.AT)
+		l.emit(token.Token_AT)
 
 		name := l.scanIdentifier()
-		if name == token.ERR {
+		if name == token.Token_ERR {
 			return l.errorf("unexpected token")
 		}
 		l.emit(name)
@@ -265,14 +264,14 @@ func (l *lxr) scanArgs() bool {
 	if !l.accept("(") {
 		return false
 	}
-	l.emit(token.LPAREN)
+	l.emit(token.Token_LPAREN)
 
 	l.ignoreWhiteSpace()
 
 	for {
 		r := l.next()
 		if r == ')' {
-			l.emit(token.RPAREN)
+			l.emit(token.Token_RPAREN)
 			return true
 		}
 
@@ -282,7 +281,7 @@ func (l *lxr) scanArgs() bool {
 		}
 
 		name := l.scanIdentifier()
-		if name == token.ERR {
+		if name == token.Token_ERR {
 			return false
 		}
 		l.emit(name)
@@ -292,7 +291,7 @@ func (l *lxr) scanArgs() bool {
 		if !l.accept(":") {
 			return false
 		}
-		l.emit(token.COLON)
+		l.emit(token.Token_COLON)
 
 		l.ignoreSpace()
 
@@ -315,27 +314,17 @@ func (l *lxr) scanValue() (ok bool) {
 	emitter := func() {}
 
 	switch r := l.peek(); {
-	case r == '$':
-		l.accept("$")
-		l.emit(token.VAR)
-		tok := l.scanIdentifier()
-		if tok == token.ERR {
-			emitter = func() { l.errorf("") }
-			break
-		}
-		emitter = func() { l.emit(tok) }
-		ok = true
 	case r == '"':
 		ok = l.scanString()
 		if !ok {
 			emitter = func() { l.errorf("") }
 			break
 		}
-		emitter = func() { l.emit(token.STRING) }
+		emitter = func() { l.emit(token.Token_STRING) }
 	case isAlphaNumeric(r):
 		if unicode.IsDigit(r) {
 			num := l.scanNumber()
-			if num == token.ERR {
+			if num == token.Token_ERR {
 				emitter = func() { l.errorf("") }
 				break
 			}
@@ -344,7 +333,7 @@ func (l *lxr) scanValue() (ok bool) {
 			break
 		}
 		tok := l.scanIdentifier()
-		if tok == token.ERR {
+		if tok == token.Token_ERR {
 			emitter = func() { l.errorf("") }
 			break
 		}
@@ -352,7 +341,7 @@ func (l *lxr) scanValue() (ok bool) {
 		ok = true
 	case r == '-':
 		num := l.scanNumber()
-		if num == token.ERR {
+		if num == token.Token_ERR {
 			emitter = func() { l.errorf("") }
 			break
 		}
@@ -361,12 +350,12 @@ func (l *lxr) scanValue() (ok bool) {
 	case r == '[':
 		ok = l.scanListLit()
 		if ok {
-			emitter = func() { l.emit(token.RBRACK) }
+			emitter = func() { l.emit(token.Token_RBRACK) }
 		}
 	case r == '{':
 		ok = l.scanObjLit()
 		if ok {
-			emitter = func() { l.emit(token.RBRACE) }
+			emitter = func() { l.emit(token.Token_RBRACE) }
 		}
 	}
 
@@ -377,7 +366,7 @@ func (l *lxr) scanValue() (ok bool) {
 
 func (l *lxr) scanListLit() bool {
 	l.accept("[")
-	l.emit(token.LBRACK)
+	l.emit(token.Token_LBRACK)
 
 	l.ignoreWhiteSpace()
 
@@ -408,7 +397,7 @@ func (l *lxr) scanListLit() bool {
 
 func (l *lxr) scanObjLit() bool {
 	l.accept("{")
-	l.emit(token.LBRACE)
+	l.emit(token.Token_LBRACE)
 
 	l.ignoreWhiteSpace()
 
@@ -424,7 +413,7 @@ func (l *lxr) scanObjLit() bool {
 		}
 
 		key := l.scanIdentifier()
-		if key == token.ERR {
+		if key == token.Token_ERR {
 			return false
 		}
 		l.emit(key)
@@ -434,7 +423,7 @@ func (l *lxr) scanObjLit() bool {
 		if !l.accept(":") {
 			return false
 		}
-		l.emit(token.COLON)
+		l.emit(token.Token_COLON)
 
 		l.ignoreSpace()
 
@@ -462,13 +451,13 @@ func lexDef(l *lxr) stateFn {
 
 	l.ignoreSpace()
 
-	if declIdent == token.EXTEND {
+	if declIdent == token.Token_EXTEND {
 		if l.accept("@") {
-			l.emit(token.AT)
+			l.emit(token.Token_AT)
 		}
 
 		declIdent = l.scanIdentifier()
-		if !declIdent.IsKeyword() || declIdent == token.DIRECTIVE {
+		if !declIdent.IsKeyword() || declIdent == token.Token_DIRECTIVE {
 			return l.errorf("invalid type extension")
 		}
 		l.emit(declIdent)
@@ -479,17 +468,17 @@ func lexDef(l *lxr) stateFn {
 	var id token.Token
 	r := l.peek()
 	switch {
-	case r == '@' && declIdent == token.DIRECTIVE:
+	case r == '@' && declIdent == token.Token_DIRECTIVE:
 		l.next()
-		l.emit(token.AT)
+		l.emit(token.Token_AT)
 		id = l.scanIdentifier()
-		if id == token.ERR {
+		if id == token.Token_ERR {
 			return l.errorf("malformed directive name: %s", l.src[l.start:l.pos])
 		}
 		l.emit(id)
 	case isAlphaNumeric(r) && !unicode.IsDigit(r):
 		id = l.scanIdentifier()
-		if id == token.ERR {
+		if id == token.Token_ERR {
 			return l.errorf("malformed type name: %s", l.src[l.start:l.pos])
 		}
 		l.emit(id)
@@ -510,7 +499,7 @@ declHead:
 		for r = l.next(); r != '\r' && r != '\n' && r != eof; {
 			r = l.next()
 		}
-		l.emit(token.COMMENT)
+		l.emit(token.Token_COMMENT)
 
 		break
 	case '(': // InputArguments
@@ -524,7 +513,7 @@ declHead:
 		goto declHead
 	case 'i': // Implements
 		impls := l.scanIdentifier()
-		if impls != token.IMPLEMENTS {
+		if impls != token.Token_IMPLEMENTS {
 			return l.errorf("expected 'implements' token, not: %s", impls)
 		}
 		l.emit(impls)
@@ -535,6 +524,7 @@ declHead:
 			r := l.peek()
 			if r == '&' {
 				l.next()
+				l.emit(token.Token_AND)
 				l.ignoreSpace()
 			}
 			if r == eof || r == '@' || r == '{' || r == '#' || r == '"' {
@@ -542,14 +532,14 @@ declHead:
 			}
 
 			loc := l.scanIdentifier()
-			if loc == token.ERR {
+			if loc == token.Token_ERR {
 				return l.errorf("malformed interface name")
 			}
 			if loc.IsKeyword() {
 				l.pos = l.start
 				return lexDef
 			}
-			l.emit(token.IDENT)
+			l.emit(token.Token_IDENT)
 
 			l.ignoreWhiteSpace()
 		}
@@ -558,10 +548,10 @@ declHead:
 		goto declHead
 	case 'o': // on
 		on := l.scanIdentifier()
-		if on != token.ON {
+		if on != token.Token_ON {
 			return l.errorf("expected 'on' token, not: %s", on)
 		}
-		l.emit(token.ON)
+		l.emit(token.Token_ON)
 
 		l.ignoreWhiteSpace()
 
@@ -569,6 +559,7 @@ declHead:
 			r := l.peek()
 			if r == '|' {
 				l.next()
+				l.emit(token.Token_OR)
 				l.ignoreSpace()
 			}
 			if r == eof || r == '#' || r == '"' {
@@ -576,14 +567,14 @@ declHead:
 			}
 
 			loc := l.scanIdentifier()
-			if loc == token.ERR {
+			if loc == token.Token_ERR {
 				return l.errorf("malformed directive location")
 			}
 			if loc.IsKeyword() {
 				l.pos = l.start
 				return lexDef
 			}
-			l.emit(token.IDENT)
+			l.emit(token.Token_IDENT)
 
 			l.ignoreWhiteSpace()
 		}
@@ -595,7 +586,7 @@ declHead:
 		l.backup()
 		return lexFieldList
 	case '=': // Union
-		l.emit(token.ASSIGN)
+		l.emit(token.Token_ASSIGN)
 
 		l.ignoreWhiteSpace()
 
@@ -606,19 +597,19 @@ declHead:
 				break
 			}
 			if r == '|' {
-				l.next()
+				l.emit(token.Token_OR)
 				l.ignoreSpace()
 			}
 
 			loc := l.scanIdentifier()
-			if loc == token.ERR {
+			if loc == token.Token_ERR {
 				return l.errorf("malformed union member")
 			}
 			if loc.IsKeyword() {
 				l.pos = l.start
 				return lexDef
 			}
-			l.emit(token.IDENT)
+			l.emit(token.Token_IDENT)
 
 			l.ignoreWhiteSpace()
 		}
@@ -632,7 +623,7 @@ declHead:
 // lexFieldList lexes a list of fields
 func lexFieldList(l *lxr) stateFn {
 	l.accept("{")
-	l.emit(token.LBRACE)
+	l.emit(token.Token_LBRACE)
 
 	l.ignoreWhiteSpace()
 
@@ -643,22 +634,22 @@ func lexFieldList(l *lxr) stateFn {
 			l.backup()
 			return lexDoc
 		case r == '}':
-			l.emit(token.RBRACE)
+			l.emit(token.Token_RBRACE)
 			return lexDoc
 		case r == '#':
 			for s := l.next(); s != '\r' && s != '\n' && s != eof; {
 				s = l.next()
 			}
-			l.emit(token.COMMENT)
+			l.emit(token.Token_COMMENT)
 		case r == '"':
 			l.backup()
 			if !l.scanString() {
 				return l.errorf("bad string syntax: %s", l.src[l.start:l.pos])
 			}
-			l.emit(token.DESCRIPTION)
+			l.emit(token.Token_DESCRIPTION)
 		case isAlphaNumeric(r) && !unicode.IsDigit(r):
 			name := l.scanIdentifier()
-			if name == token.ERR {
+			if name == token.Token_ERR {
 				return l.errorf("malformed field name")
 			}
 			l.emit(name)
@@ -673,7 +664,7 @@ func lexFieldList(l *lxr) stateFn {
 			l.ignoreSpace()
 
 			if l.accept(":") {
-				l.emit(token.COLON)
+				l.emit(token.Token_COLON)
 			}
 
 			l.ignoreSpace()
@@ -695,7 +686,7 @@ func lexFieldList(l *lxr) stateFn {
 			l.ignoreSpace()
 
 			if l.accept("=") {
-				l.emit(token.ASSIGN)
+				l.emit(token.Token_ASSIGN)
 				l.ignoreSpace()
 
 				ok := l.scanValue()
@@ -735,7 +726,7 @@ func (l *lxr) scanType() bool {
 		l.ignoreSpace()
 		return l.scanType()
 	case r == '[':
-		l.emit(token.LBRACK)
+		l.emit(token.Token_LBRACK)
 		ok := l.scanType()
 		if !ok {
 			return false
@@ -744,10 +735,10 @@ func (l *lxr) scanType() bool {
 		if !l.accept("]") {
 			return false
 		}
-		l.emit(token.RBRACK)
+		l.emit(token.Token_RBRACK)
 	case isAlphaNumeric(r) && !unicode.IsDigit(r):
 		name := l.scanIdentifier()
-		if name == token.ERR {
+		if name == token.Token_ERR {
 			return false
 		}
 		l.emit(name)
@@ -755,7 +746,7 @@ func (l *lxr) scanType() bool {
 
 	l.ignoreSpace()
 	if l.accept("!") {
-		l.emit(token.NOT)
+		l.emit(token.Token_NOT)
 	}
 
 	return true
@@ -765,7 +756,7 @@ func noopStateFn(*lxr) stateFn { return nil }
 
 func (l *lxr) scanArgDefs() bool {
 	l.accept("(")
-	l.emit(token.LPAREN)
+	l.emit(token.Token_LPAREN)
 
 	l.ignoreWhiteSpace()
 
@@ -776,25 +767,25 @@ func (l *lxr) scanArgDefs() bool {
 			l.backup()
 			return false
 		case ')':
-			l.emit(token.RPAREN)
+			l.emit(token.Token_RPAREN)
 			return true
 		case '#':
 			for s := l.next(); s != '\r' && s != '\n' && s != eof; {
 				s = l.next()
 			}
-			l.emit(token.COMMENT)
+			l.emit(token.Token_COMMENT)
 			l.ignoreWhiteSpace()
 		case '"':
 			l.backup()
 			if !l.scanString() {
 				return false
 			}
-			l.emit(token.DESCRIPTION)
+			l.emit(token.Token_DESCRIPTION)
 			l.ignoreWhiteSpace()
 		}
 
 		name := l.scanIdentifier()
-		if name == token.ERR {
+		if name == token.Token_ERR {
 			return false
 		}
 		l.emit(name)
@@ -804,7 +795,7 @@ func (l *lxr) scanArgDefs() bool {
 		if !l.accept(":") {
 			return false
 		}
-		l.emit(token.COLON)
+		l.emit(token.Token_COLON)
 
 		l.ignoreSpace()
 
@@ -816,7 +807,7 @@ func (l *lxr) scanArgDefs() bool {
 		l.ignoreSpace()
 
 		if l.accept("=") {
-			l.emit(token.ASSIGN)
+			l.emit(token.Token_ASSIGN)
 			l.ignoreSpace()
 
 			ok := l.scanValue()
@@ -853,7 +844,7 @@ func (l *lxr) scanIdentifier() token.Token {
 	l.backup()
 	word := string(l.src[l.start:l.pos])
 	if !l.atTerminator() {
-		return token.ERR
+		return token.Token_ERR
 	}
 
 	return token.Lookup(word)
@@ -904,7 +895,7 @@ func (l *lxr) scanNumber() token.Token {
 	l.acceptRun("0123456789")
 
 	if !l.accept(".") && !l.accept("eE") {
-		return token.INT
+		return token.Token_INT
 	}
 
 	l.acceptRun("0123456789")
@@ -912,7 +903,7 @@ func (l *lxr) scanNumber() token.Token {
 	l.accept("+-")
 	l.acceptRun("0123456789")
 
-	return token.FLOAT
+	return token.Token_FLOAT
 }
 
 // isAlphaNumeric reports whether r is an alphabetic, digit, or underscore.

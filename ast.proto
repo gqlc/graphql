@@ -6,9 +6,11 @@ package gqlc.protobuf;
 
 option go_package = "github.com/gqlc/graphql/ast;ast";
 
+import "token.proto";
+
 // Describes a complete GraphQL Document.
 message Document {
-    // file name, relative to root of source tree.
+    // document name
     string name = 1;
     DocGroup doc = 2;
 
@@ -104,7 +106,7 @@ message Ident {
 // BasicLit represents a literal of basic type.
 message BasicLit {
     int64 valuePos = 1; // literal position
-    int64 kind = 2; // token.INT, token.FLOAT, or token.STRING
+    gqlc.protobuf.Token kind = 2; // token.INT, token.FLOAT, or token.STRING
     string value = 3;
 }
 
@@ -267,27 +269,27 @@ message DirectiveType {
 
 // A TypeSpec node represents a GraphQL type declaration.
 message TypeSpec {
-    DocGroup doc = 1;
-    Ident name = 2;
+    Ident name = 1;
 
     oneof type {
-        SchemaType schema = 3;
-        ScalarType scalar = 4;
-        ObjectType object = 5;
-        InterfaceType interface = 6;
-        UnionType union = 7;
-        EnumType enum = 8;
-        InputType input = 9;
-        DirectiveType directive = 10;
+        SchemaType schema = 2;
+        ScalarType scalar = 3;
+        ObjectType object = 4;
+        InterfaceType interface = 5;
+        UnionType union = 6;
+        EnumType enum = 7;
+        InputType input = 8;
+        DirectiveType directive = 9;
     }
 
-    repeated DirectiveLit directives = 11;
+    repeated DirectiveLit directives = 10;
 }
 
 // A TypeExtensionSpec node represents a GraphQL type extension.
 message TypeExtensionSpec {
-    DocGroup doc = 1;
-    TypeSpec type = 2;
+    int64 tokPos = 1; // position of type token
+    gqlc.protobuf.Token tok = 2; // TYPE_KEYWORD (e.g. schema, input, union)
+    TypeSpec type = 3;
 }
 
 // Decl
@@ -296,7 +298,7 @@ message TypeExtensionSpec {
 message TypeDecl {
     DocGroup doc = 1; // associated documentation; or nil
     int64 tokPos = 2; // position of Tok
-    int64 tok = 3; // TYPE_KEYWORD (e.g. schema, input, union)
+    gqlc.protobuf.Token tok = 3; // TYPE_KEYWORD (e.g. schema, input, union)
 
     oneof spec {
         TypeSpec typeSpec = 4;
