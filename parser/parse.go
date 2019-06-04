@@ -498,7 +498,7 @@ func (p *parser) parseValue() (v interface{}) {
 				Val: pcLit,
 			})
 		}
-	case token.Token_STRING, token.Token_INT, token.Token_FLOAT, token.Token_BOOL, token.Token_NULL:
+	case token.Token_STRING, token.Token_INT, token.Token_FLOAT, token.Token_IDENT, token.Token_BOOL, token.Token_NULL:
 		// Construct basic literal
 		v = &ast.BasicLit{
 			ValuePos: int64(item.Pos),
