@@ -203,6 +203,7 @@ func (p *parser2) parseDoc(pdg *ast.DocGroup, types *[]*ast.TypeDecl, directives
 			docs = append(docs, d)
 		case item.Typ == token.Token_AT:
 			p.parseDirectives(directives)
+		case item.Typ == token.Token_COMMENT:
 		default:
 			p.unexpected(item, "parseDoc:UnknownToken")
 		}
