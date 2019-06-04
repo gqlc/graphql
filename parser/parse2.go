@@ -860,7 +860,7 @@ func (p *parser2) parseValue() interface{} {
 	item := p.next()
 
 	switch item.Typ {
-	case token.Token_INT, token.Token_FLOAT, token.Token_STRING, token.Token_BOOL:
+	case token.Token_INT, token.Token_FLOAT, token.Token_STRING, token.Token_BOOL, token.Token_NULL, token.Token_IDENT:
 		return &ast.BasicLit{Kind: item.Typ, ValuePos: int64(item.Pos), Value: item.Val}
 	case token.Token_LBRACK:
 		list := &ast.ListLit_Composite{}
