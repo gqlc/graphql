@@ -73,7 +73,7 @@ func TestUpdate(t *testing.T) {
 	}
 	t.Logf("updating parse tree file: %s", exDocFile)
 
-	doc, err := ParseDoc(token.NewDocSet(), "test", bytes.NewReader(gqlSrc), 0)
+	doc, err := ParseDoc(token.NewDocSet(), "test", bytes.NewReader(gqlSrc), ParseComments)
 	if err != nil {
 		t.Error(err)
 		return
@@ -576,6 +576,32 @@ func TestParser(t *testing.T) {
 			},
 		},
 		{
+			Name: "WithComments",
+			Src: `type Test { # Hello
+}`,
+			Ex: &ast.Document{
+				Types: []*ast.TypeDecl{
+					{
+						TokPos: 1,
+						Tok:    token.Token_TYPE,
+						Doc: &ast.DocGroup{List: []*ast.DocGroup_Doc{
+							{Text: "# Hello\n", Comment: true, Char: 13},
+						}},
+						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
+							Name: &ast.Ident{NamePos: 6, Name: "Test"},
+							Type: &ast.TypeSpec_Object{Object: &ast.ObjectType{
+								Object: 1,
+								Fields: &ast.FieldList{
+									Opening: 11,
+									Closing: 21,
+								},
+							}},
+						}},
+					},
+				},
+			},
+		},
+		{
 			Name: "WithInterfaces",
 			Src:  `type Test implements A & B & C`,
 			Ex: &ast.Document{
@@ -790,6 +816,32 @@ func TestParser(t *testing.T) {
 			},
 		},
 		{
+			Name: "EnumWithComment",
+			Src: `enum Test { # Hello
+}`,
+			Ex: &ast.Document{
+				Types: []*ast.TypeDecl{
+					{
+						TokPos: 1,
+						Tok:    token.Token_ENUM,
+						Doc: &ast.DocGroup{List: []*ast.DocGroup_Doc{
+							{Text: "# Hello\n", Comment: true, Char: 13},
+						}},
+						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
+							Name: &ast.Ident{NamePos: 6, Name: "Test"},
+							Type: &ast.TypeSpec_Enum{Enum: &ast.EnumType{
+								Enum: 1,
+								Values: &ast.FieldList{
+									Opening: 11,
+									Closing: 21,
+								},
+							}},
+						}},
+					},
+				},
+			},
+		},
+		{
 			Name: "Directive",
 			Src:  `directive @test on SCHEMA | FIELD`,
 			Ex: &ast.Document{
@@ -829,7 +881,7 @@ func TestParser(t *testing.T) {
 			}()
 
 			dset := token.NewDocSet()
-			p := &parser{}
+			p := &parser{mode: ParseComments}
 
 			doc := dset.AddDoc(testCase.Name, dset.Base(), len(testCase.Src))
 			p.l = lexer.Lex(doc, testCase.Src)
@@ -844,7 +896,7 @@ func TestParser(t *testing.T) {
 }
 
 func TestParseDoc(t *testing.T) {
-	doc, err := ParseDoc(token.NewDocSet(), "test", bytes.NewReader(gqlSrc), 0)
+	doc, err := ParseDoc(token.NewDocSet(), "test", bytes.NewReader(gqlSrc), ParseComments)
 	if err != nil {
 		t.Error(err)
 		return
@@ -867,7 +919,7 @@ func BenchmarkParseDoc(b *testing.B) {
 }
 
 func TestParseDir(t *testing.T) {
-	docs, err := ParseDir(token.NewDocSet(), "./testdir", nil, 0)
+	docs, err := ParseDir(token.NewDocSet(), "./testdir", nil, ParseComments)
 	if err != nil {
 		t.Error(err)
 		return

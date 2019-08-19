@@ -186,6 +186,7 @@ func (p *parser) parse(tokDoc *token.Doc, b []byte, mode Mode) (doc *ast.Documen
 	defer p.recover(&err)
 	p.l = lexer.Lex(tokDoc, string(b))
 	p.doc = tokDoc
+	p.mode = mode
 
 	doc = &ast.Document{
 		Name: p.name,
@@ -260,12 +261,9 @@ func (p *parser) parseDoc(pdg *ast.DocGroup, types *[]*ast.TypeDecl, directives 
 			}
 		case item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 || item.Typ == token.Token_DESCRIPTION:
 			d := &ast.DocGroup_Doc{
-				Text: item.Val,
-				Char: int64(item.Pos),
-			}
-
-			if item.Typ == token.Token_COMMENT {
-				d.Comment = true
+				Text:    item.Val,
+				Char:    int64(item.Pos),
+				Comment: item.Typ == token.Token_COMMENT,
 			}
 
 			if len(docs) == 0 {
@@ -662,6 +660,9 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 		item := p.next()
 		switch {
 		case item.Typ == token.Token_RBRACE:
+			*docs = append(*docs, p.dg...)
+			p.dg = p.dg[:0]
+
 			*fields = append(*fields, p.fields...)
 			p.fields = p.fields[:0]
 			return int64(item.Pos)
@@ -715,12 +716,9 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 			p.parseDirectives(&f.Directives)
 		case item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 || item.Typ == token.Token_DESCRIPTION:
 			d := &ast.DocGroup_Doc{
-				Text: item.Val,
-				Char: int64(item.Pos),
-			}
-
-			if item.Typ == token.Token_COMMENT {
-				d.Comment = true
+				Text:    item.Val,
+				Char:    int64(item.Pos),
+				Comment: item.Typ == token.Token_COMMENT,
 			}
 
 			if len(p.dg) == 0 {
@@ -749,6 +747,9 @@ func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue
 		item := p.next()
 		switch {
 		case item.Typ == token.Token_RPAREN || item.Typ == token.Token_RBRACE:
+			*docs = append(*docs, p.cdg...)
+			p.cdg = p.cdg[:0]
+
 			*args = append(*args, p.args...)
 			p.args = p.args[:0]
 			return int64(item.Pos)
@@ -797,12 +798,9 @@ func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue
 			p.parseDirectives(&arg.Directives)
 		case item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 || item.Typ == token.Token_DESCRIPTION:
 			d := &ast.DocGroup_Doc{
-				Text: item.Val,
-				Char: int64(item.Pos),
-			}
-
-			if item.Typ == token.Token_COMMENT {
-				d.Comment = true
+				Text:    item.Val,
+				Char:    int64(item.Pos),
+				Comment: item.Typ == token.Token_COMMENT,
 			}
 
 			if len(p.cdg) == 0 {
@@ -831,6 +829,9 @@ func (p *parser) parseEnumValues(docs *[]*ast.DocGroup_Doc, values *[]*ast.Field
 		item := p.next()
 		switch {
 		case item.Typ == token.Token_RBRACE:
+			*docs = append(*docs, p.dg...)
+			p.dg = p.dg[:0]
+
 			*values = append(*values, p.fields...)
 			p.fields = p.fields[:0]
 			return int64(item.Pos)
@@ -852,12 +853,9 @@ func (p *parser) parseEnumValues(docs *[]*ast.DocGroup_Doc, values *[]*ast.Field
 			}
 		case item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 || item.Typ == token.Token_DESCRIPTION:
 			d := &ast.DocGroup_Doc{
-				Text: item.Val,
-				Char: int64(item.Pos),
-			}
-
-			if item.Typ == token.Token_COMMENT {
-				d.Comment = true
+				Text:    item.Val,
+				Char:    int64(item.Pos),
+				Comment: item.Typ == token.Token_COMMENT,
 			}
 
 			if len(p.dg) == 0 {
