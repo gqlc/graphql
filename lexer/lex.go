@@ -775,6 +775,7 @@ func (l *lxr) scanArgDefs() bool {
 			}
 			l.emit(token.Token_COMMENT)
 			l.ignoreWhiteSpace()
+			continue
 		case '"':
 			l.backup()
 			if !l.scanString() {
@@ -782,6 +783,9 @@ func (l *lxr) scanArgDefs() bool {
 			}
 			l.emit(token.Token_DESCRIPTION)
 			l.ignoreWhiteSpace()
+			continue
+		default:
+			l.backup()
 		}
 
 		name := l.scanIdentifier()

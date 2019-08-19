@@ -348,6 +348,48 @@ func TestLexer(t *testing.T) {
 			},
 		},
 		{
+			Name: "TypeWithComments",
+			Src: `type Test { # Hello
+
+	"Hello"
+	a(
+        """
+        Arg description
+        """
+        one: One
+
+        # Hello
+
+        """
+        Arg description
+        """
+        two: Two
+    ): A
+}`,
+			Items: []Item{
+				{Typ: token.Token_TYPE, Val: "type"},
+				{Typ: token.Token_IDENT, Val: "Test"},
+				{Typ: token.Token_LBRACE, Val: "{"},
+				{Typ: token.Token_COMMENT, Val: "# Hello\n"},
+				{Typ: token.Token_DESCRIPTION, Val: `"Hello"`},
+				{Typ: token.Token_IDENT, Val: "a"},
+				{Typ: token.Token_LPAREN, Val: "("},
+				{Typ: token.Token_DESCRIPTION, Val: "\"\"\"\n        Arg description\n        \"\"\""},
+				{Typ: token.Token_IDENT, Val: "one"},
+				{Typ: token.Token_COLON, Val: ":"},
+				{Typ: token.Token_IDENT, Val: "One"},
+				{Typ: token.Token_COMMENT, Val: "# Hello\n"},
+				{Typ: token.Token_DESCRIPTION, Val: "\"\"\"\n        Arg description\n        \"\"\""},
+				{Typ: token.Token_IDENT, Val: "two"},
+				{Typ: token.Token_COLON, Val: ":"},
+				{Typ: token.Token_IDENT, Val: "Two"},
+				{Typ: token.Token_RPAREN, Val: ")"},
+				{Typ: token.Token_COLON, Val: ":"},
+				{Typ: token.Token_IDENT, Val: "A"},
+				{Typ: token.Token_RBRACE, Val: "}"},
+			},
+		},
+		{
 			Name: "Union",
 			Src:  `union Test = A | B | C`,
 			Items: []Item{
