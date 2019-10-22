@@ -1,37 +1,69 @@
 {
   "name": "test",
+  "doc": {
+    "list": [
+      {
+        "text": "# Top Level Comment\n",
+        "char": "1",
+        "comment": true
+      }
+    ]
+  },
+  "directives": [
+    {
+      "atPos": "22",
+      "name": "test",
+      "args": {
+        "lparen": "27",
+        "args": [
+          {
+            "name": {
+              "namePos": "28",
+              "name": "msg"
+            },
+            "basicLit": {
+              "valuePos": "33",
+              "kind": 6,
+              "value": "\"This is a top level directive\""
+            }
+          }
+        ],
+        "rparen": "64"
+      }
+    }
+  ],
   "schema": {
     "doc": {
       "list": [
         {
           "text": "\"Schema description\"",
-          "char": "1"
+          "char": "67"
         }
       ]
     },
-    "tokPos": "22",
+    "tokPos": "88",
     "tok": 27,
     "typeSpec": {
       "schema": {
-        "schema": "22",
+        "schema": "88",
         "rootOps": {
-          "opening": "56",
+          "opening": "122",
           "list": [
             {
               "doc": {
                 "list": [
                   {
                     "text": "\"Query description\"",
-                    "char": "62"
+                    "char": "128"
                   }
                 ]
               },
               "name": {
-                "namePos": "86",
+                "namePos": "152",
                 "name": "query"
               },
               "ident": {
-                "namePos": "93",
+                "namePos": "159",
                 "name": "Query"
               }
             },
@@ -40,16 +72,16 @@
                 "list": [
                   {
                     "text": "\"Mutation description\"",
-                    "char": "104"
+                    "char": "170"
                   }
                 ]
               },
               "name": {
-                "namePos": "131",
+                "namePos": "197",
                 "name": "mutation"
               },
               "ident": {
-                "namePos": "141",
+                "namePos": "207",
                 "name": "Mutation"
               }
             },
@@ -58,55 +90,55 @@
                 "list": [
                   {
                     "text": "\"Subscription description\"",
-                    "char": "155"
+                    "char": "221"
                   }
                 ]
               },
               "name": {
-                "namePos": "186",
+                "namePos": "252",
                 "name": "subscription"
               },
               "ident": {
-                "namePos": "200",
+                "namePos": "266",
                 "name": "Subscription"
               }
             }
           ],
-          "closing": "213"
+          "closing": "279"
         }
       },
       "directives": [
         {
-          "atPos": "29",
+          "atPos": "95",
           "name": "one"
         },
         {
-          "atPos": "34",
+          "atPos": "100",
           "name": "two",
           "args": {
-            "lparen": "38",
-            "rparen": "39"
+            "lparen": "104",
+            "rparen": "105"
           }
         },
         {
-          "atPos": "41",
+          "atPos": "107",
           "name": "three",
           "args": {
-            "lparen": "47",
+            "lparen": "113",
             "args": [
               {
                 "name": {
-                  "namePos": "48",
+                  "namePos": "114",
                   "name": "a"
                 },
                 "basicLit": {
-                  "valuePos": "51",
+                  "valuePos": "117",
                   "kind": 6,
                   "value": "\"A\""
                 }
               }
             ],
-            "rparen": "54"
+            "rparen": "120"
           }
         }
       ]
@@ -118,33 +150,33 @@
         "list": [
           {
             "text": "\"Schema description\"",
-            "char": "1"
+            "char": "67"
           }
         ]
       },
-      "tokPos": "22",
+      "tokPos": "88",
       "tok": 27,
       "typeSpec": {
         "schema": {
-          "schema": "22",
+          "schema": "88",
           "rootOps": {
-            "opening": "56",
+            "opening": "122",
             "list": [
               {
                 "doc": {
                   "list": [
                     {
                       "text": "\"Query description\"",
-                      "char": "62"
+                      "char": "128"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "86",
+                  "namePos": "152",
                   "name": "query"
                 },
                 "ident": {
-                  "namePos": "93",
+                  "namePos": "159",
                   "name": "Query"
                 }
               },
@@ -153,16 +185,16 @@
                   "list": [
                     {
                       "text": "\"Mutation description\"",
-                      "char": "104"
+                      "char": "170"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "131",
+                  "namePos": "197",
                   "name": "mutation"
                 },
                 "ident": {
-                  "namePos": "141",
+                  "namePos": "207",
                   "name": "Mutation"
                 }
               },
@@ -171,55 +203,55 @@
                   "list": [
                     {
                       "text": "\"Subscription description\"",
-                      "char": "155"
+                      "char": "221"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "186",
+                  "namePos": "252",
                   "name": "subscription"
                 },
                 "ident": {
-                  "namePos": "200",
+                  "namePos": "266",
                   "name": "Subscription"
                 }
               }
             ],
-            "closing": "213"
+            "closing": "279"
           }
         },
         "directives": [
           {
-            "atPos": "29",
+            "atPos": "95",
             "name": "one"
           },
           {
-            "atPos": "34",
+            "atPos": "100",
             "name": "two",
             "args": {
-              "lparen": "38",
-              "rparen": "39"
+              "lparen": "104",
+              "rparen": "105"
             }
           },
           {
-            "atPos": "41",
+            "atPos": "107",
             "name": "three",
             "args": {
-              "lparen": "47",
+              "lparen": "113",
               "args": [
                 {
                   "name": {
-                    "namePos": "48",
+                    "namePos": "114",
                     "name": "a"
                   },
                   "basicLit": {
-                    "valuePos": "51",
+                    "valuePos": "117",
                     "kind": 6,
                     "value": "\"A\""
                   }
                 }
               ],
-              "rparen": "54"
+              "rparen": "120"
             }
           }
         ]
@@ -230,78 +262,78 @@
         "list": [
           {
             "text": "\"Scalar description\"",
-            "char": "216"
+            "char": "282"
           }
         ]
       },
-      "tokPos": "237",
+      "tokPos": "303",
       "tok": 29,
       "typeSpec": {
         "name": {
-          "namePos": "244",
+          "namePos": "310",
           "name": "Test"
         },
         "scalar": {
-          "scalar": "237",
+          "scalar": "303",
           "name": {
-            "namePos": "244",
+            "namePos": "310",
             "name": "Test"
           }
         },
         "directives": [
           {
-            "atPos": "249",
+            "atPos": "315",
             "name": "one"
           },
           {
-            "atPos": "254",
+            "atPos": "320",
             "name": "two",
             "args": {
-              "lparen": "258",
-              "rparen": "259"
+              "lparen": "324",
+              "rparen": "325"
             }
           },
           {
-            "atPos": "261",
+            "atPos": "327",
             "name": "three",
             "args": {
-              "lparen": "267",
+              "lparen": "333",
               "args": [
                 {
                   "name": {
-                    "namePos": "268",
+                    "namePos": "334",
                     "name": "a"
                   },
                   "basicLit": {
-                    "valuePos": "271",
+                    "valuePos": "337",
                     "kind": 7,
                     "value": "1"
                   }
                 },
                 {
                   "name": {
-                    "namePos": "274",
+                    "namePos": "340",
                     "name": "b"
                   },
                   "basicLit": {
-                    "valuePos": "277",
+                    "valuePos": "343",
                     "kind": 7,
                     "value": "2"
                   }
                 },
                 {
                   "name": {
-                    "namePos": "280",
+                    "namePos": "346",
                     "name": "c"
                   },
                   "basicLit": {
-                    "valuePos": "283",
+                    "valuePos": "349",
                     "kind": 7,
                     "value": "3"
                   }
                 }
               ],
-              "rparen": "284"
+              "rparen": "350"
             }
           }
         ]
@@ -312,48 +344,48 @@
         "list": [
           {
             "text": "\"Object description\"",
-            "char": "287"
+            "char": "353"
           }
         ]
       },
-      "tokPos": "308",
+      "tokPos": "374",
       "tok": 28,
       "typeSpec": {
         "name": {
-          "namePos": "313",
+          "namePos": "379",
           "name": "Test"
         },
         "object": {
-          "object": "308",
-          "implPos": "318",
+          "object": "374",
+          "implPos": "384",
           "interfaces": [
             {
-              "namePos": "329",
+              "namePos": "395",
               "name": "One"
             },
             {
-              "namePos": "335",
+              "namePos": "401",
               "name": "Two"
             }
           ],
           "fields": {
-            "opening": "370",
+            "opening": "436",
             "list": [
               {
                 "doc": {
                   "list": [
                     {
                       "text": "\"Field description\"",
-                      "char": "376"
+                      "char": "442"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "400",
+                  "namePos": "466",
                   "name": "one"
                 },
                 "ident": {
-                  "namePos": "405",
+                  "namePos": "471",
                   "name": "One"
                 }
               },
@@ -362,60 +394,60 @@
                   "list": [
                     {
                       "text": "\"Field description\"",
-                      "char": "414"
+                      "char": "480"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "438",
+                  "namePos": "504",
                   "name": "two"
                 },
                 "args": {
-                  "opening": "441",
+                  "opening": "507",
                   "list": [
                     {
                       "doc": {
                         "list": [
                           {
                             "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                            "char": "451"
+                            "char": "517"
                           }
                         ]
                       },
                       "name": {
-                        "namePos": "499",
+                        "namePos": "565",
                         "name": "one"
                       },
                       "ident": {
-                        "namePos": "504",
+                        "namePos": "570",
                         "name": "One"
                       },
                       "basicLit": {
-                        "valuePos": "510",
+                        "valuePos": "576",
                         "kind": 7,
                         "value": "1"
                       },
                       "directives": [
                         {
-                          "atPos": "512",
+                          "atPos": "578",
                           "name": "one"
                         }
                       ]
                     }
                   ],
-                  "closing": "521"
+                  "closing": "587"
                 },
                 "ident": {
-                  "namePos": "524",
+                  "namePos": "590",
                   "name": "Two"
                 },
                 "directives": [
                   {
-                    "atPos": "528",
+                    "atPos": "594",
                     "name": "one"
                   },
                   {
-                    "atPos": "533",
+                    "atPos": "599",
                     "name": "two"
                   }
                 ]
@@ -425,42 +457,42 @@
                   "list": [
                     {
                       "text": "\"Field description\"",
-                      "char": "543"
+                      "char": "609"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "567",
+                  "namePos": "633",
                   "name": "three"
                 },
                 "args": {
-                  "opening": "572",
+                  "opening": "638",
                   "list": [
                     {
                       "doc": {
                         "list": [
                           {
                             "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                            "char": "582"
+                            "char": "648"
                           }
                         ]
                       },
                       "name": {
-                        "namePos": "630",
+                        "namePos": "696",
                         "name": "one"
                       },
                       "ident": {
-                        "namePos": "635",
+                        "namePos": "701",
                         "name": "One"
                       },
                       "basicLit": {
-                        "valuePos": "641",
+                        "valuePos": "707",
                         "kind": 7,
                         "value": "1"
                       },
                       "directives": [
                         {
-                          "atPos": "643",
+                          "atPos": "709",
                           "name": "one"
                         }
                       ]
@@ -470,34 +502,34 @@
                         "list": [
                           {
                             "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                            "char": "657"
+                            "char": "723"
                           }
                         ]
                       },
                       "name": {
-                        "namePos": "705",
+                        "namePos": "771",
                         "name": "two"
                       },
                       "ident": {
-                        "namePos": "710",
+                        "namePos": "776",
                         "name": "Two"
                       },
                       "basicLit": {
-                        "valuePos": "716",
+                        "valuePos": "782",
                         "kind": 7,
                         "value": "2"
                       },
                       "directives": [
                         {
-                          "atPos": "718",
+                          "atPos": "784",
                           "name": "one"
                         },
                         {
-                          "atPos": "723",
+                          "atPos": "789",
                           "name": "two",
                           "args": {
-                            "lparen": "727",
-                            "rparen": "728"
+                            "lparen": "793",
+                            "rparen": "794"
                           }
                         }
                       ]
@@ -507,171 +539,171 @@
                         "list": [
                           {
                             "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                            "char": "739"
+                            "char": "805"
                           }
                         ]
                       },
                       "name": {
-                        "namePos": "787",
+                        "namePos": "853",
                         "name": "three"
                       },
                       "ident": {
-                        "namePos": "794",
+                        "namePos": "860",
                         "name": "Three"
                       },
                       "basicLit": {
-                        "valuePos": "802",
+                        "valuePos": "868",
                         "kind": 7,
                         "value": "3"
                       },
                       "directives": [
                         {
-                          "atPos": "804",
+                          "atPos": "870",
                           "name": "one"
                         },
                         {
-                          "atPos": "809",
+                          "atPos": "875",
                           "name": "two",
                           "args": {
-                            "lparen": "813",
-                            "rparen": "814"
+                            "lparen": "879",
+                            "rparen": "880"
                           }
                         },
                         {
-                          "atPos": "816",
+                          "atPos": "882",
                           "name": "three",
                           "args": {
-                            "lparen": "822",
+                            "lparen": "888",
                             "args": [
                               {
                                 "name": {
-                                  "namePos": "823",
+                                  "namePos": "889",
                                   "name": "a"
                                 },
                                 "basicLit": {
-                                  "valuePos": "826",
+                                  "valuePos": "892",
                                   "kind": 7,
                                   "value": "1"
                                 }
                               },
                               {
                                 "name": {
-                                  "namePos": "829",
+                                  "namePos": "895",
                                   "name": "b"
                                 },
                                 "basicLit": {
-                                  "valuePos": "832",
+                                  "valuePos": "898",
                                   "kind": 7,
                                   "value": "2"
                                 }
                               }
                             ],
-                            "rparen": "833"
+                            "rparen": "899"
                           }
                         }
                       ]
                     }
                   ],
-                  "closing": "839"
+                  "closing": "905"
                 },
                 "ident": {
-                  "namePos": "842",
+                  "namePos": "908",
                   "name": "Three"
                 },
                 "directives": [
                   {
-                    "atPos": "848",
+                    "atPos": "914",
                     "name": "one"
                   },
                   {
-                    "atPos": "853",
+                    "atPos": "919",
                     "name": "two",
                     "args": {
-                      "lparen": "857",
-                      "rparen": "858"
+                      "lparen": "923",
+                      "rparen": "924"
                     }
                   },
                   {
-                    "atPos": "860",
+                    "atPos": "926",
                     "name": "three",
                     "args": {
-                      "lparen": "866",
+                      "lparen": "932",
                       "args": [
                         {
                           "name": {
-                            "namePos": "867",
+                            "namePos": "933",
                             "name": "a"
                           },
                           "basicLit": {
-                            "valuePos": "870",
+                            "valuePos": "936",
                             "kind": 7,
                             "value": "1"
                           }
                         },
                         {
                           "name": {
-                            "namePos": "873",
+                            "namePos": "939",
                             "name": "b"
                           },
                           "basicLit": {
-                            "valuePos": "876",
+                            "valuePos": "942",
                             "kind": 7,
                             "value": "2"
                           }
                         }
                       ],
-                      "rparen": "877"
+                      "rparen": "943"
                     }
                   }
                 ]
               }
             ],
-            "closing": "879"
+            "closing": "945"
           }
         },
         "directives": [
           {
-            "atPos": "339",
+            "atPos": "405",
             "name": "one"
           },
           {
-            "atPos": "344",
+            "atPos": "410",
             "name": "two",
             "args": {
-              "lparen": "348",
-              "rparen": "349"
+              "lparen": "414",
+              "rparen": "415"
             }
           },
           {
-            "atPos": "351",
+            "atPos": "417",
             "name": "three",
             "args": {
-              "lparen": "357",
+              "lparen": "423",
               "args": [
                 {
                   "name": {
-                    "namePos": "358",
+                    "namePos": "424",
                     "name": "a"
                   },
                   "basicLit": {
-                    "valuePos": "361",
+                    "valuePos": "427",
                     "kind": 7,
                     "value": "1"
                   }
                 },
                 {
                   "name": {
-                    "namePos": "364",
+                    "namePos": "430",
                     "name": "b"
                   },
                   "basicLit": {
-                    "valuePos": "367",
+                    "valuePos": "433",
                     "kind": 7,
                     "value": "2"
                   }
                 }
               ],
-              "rparen": "368"
+              "rparen": "434"
             }
           }
         ]
@@ -682,42 +714,42 @@
         "list": [
           {
             "text": "\"Interface description\"",
-            "char": "882"
+            "char": "948"
           },
           {
             "text": "# Hello\n",
-            "char": "954",
+            "char": "1020",
             "comment": true
           }
         ]
       },
-      "tokPos": "906",
+      "tokPos": "972",
       "tok": 31,
       "typeSpec": {
         "name": {
-          "namePos": "916",
+          "namePos": "982",
           "name": "Test"
         },
         "interface": {
-          "interface": "906",
+          "interface": "972",
           "fields": {
-            "opening": "952",
+            "opening": "1018",
             "list": [
               {
                 "doc": {
                   "list": [
                     {
                       "text": "\"Field description\"",
-                      "char": "966"
+                      "char": "1032"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "990",
+                  "namePos": "1056",
                   "name": "one"
                 },
                 "ident": {
-                  "namePos": "995",
+                  "namePos": "1061",
                   "name": "One"
                 }
               },
@@ -726,60 +758,60 @@
                   "list": [
                     {
                       "text": "\"Field description\"",
-                      "char": "1004"
+                      "char": "1070"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "1028",
+                  "namePos": "1094",
                   "name": "two"
                 },
                 "args": {
-                  "opening": "1031",
+                  "opening": "1097",
                   "list": [
                     {
                       "doc": {
                         "list": [
                           {
                             "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                            "char": "1041"
+                            "char": "1107"
                           }
                         ]
                       },
                       "name": {
-                        "namePos": "1089",
+                        "namePos": "1155",
                         "name": "one"
                       },
                       "ident": {
-                        "namePos": "1094",
+                        "namePos": "1160",
                         "name": "One"
                       },
                       "basicLit": {
-                        "valuePos": "1100",
+                        "valuePos": "1166",
                         "kind": 7,
                         "value": "1"
                       },
                       "directives": [
                         {
-                          "atPos": "1102",
+                          "atPos": "1168",
                           "name": "one"
                         }
                       ]
                     }
                   ],
-                  "closing": "1111"
+                  "closing": "1177"
                 },
                 "ident": {
-                  "namePos": "1114",
+                  "namePos": "1180",
                   "name": "Two"
                 },
                 "directives": [
                   {
-                    "atPos": "1118",
+                    "atPos": "1184",
                     "name": "one"
                   },
                   {
-                    "atPos": "1123",
+                    "atPos": "1189",
                     "name": "two"
                   }
                 ]
@@ -789,42 +821,42 @@
                   "list": [
                     {
                       "text": "\"Field description\"",
-                      "char": "1133"
+                      "char": "1199"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "1157",
+                  "namePos": "1223",
                   "name": "three"
                 },
                 "args": {
-                  "opening": "1162",
+                  "opening": "1228",
                   "list": [
                     {
                       "doc": {
                         "list": [
                           {
                             "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                            "char": "1172"
+                            "char": "1238"
                           }
                         ]
                       },
                       "name": {
-                        "namePos": "1220",
+                        "namePos": "1286",
                         "name": "one"
                       },
                       "ident": {
-                        "namePos": "1225",
+                        "namePos": "1291",
                         "name": "One"
                       },
                       "basicLit": {
-                        "valuePos": "1231",
+                        "valuePos": "1297",
                         "kind": 7,
                         "value": "1"
                       },
                       "directives": [
                         {
-                          "atPos": "1233",
+                          "atPos": "1299",
                           "name": "one"
                         }
                       ]
@@ -834,39 +866,39 @@
                         "list": [
                           {
                             "text": "# Hello\n",
-                            "char": "1247",
+                            "char": "1313",
                             "comment": true
                           },
                           {
                             "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                            "char": "1264"
+                            "char": "1330"
                           }
                         ]
                       },
                       "name": {
-                        "namePos": "1312",
+                        "namePos": "1378",
                         "name": "two"
                       },
                       "ident": {
-                        "namePos": "1317",
+                        "namePos": "1383",
                         "name": "Two"
                       },
                       "basicLit": {
-                        "valuePos": "1323",
+                        "valuePos": "1389",
                         "kind": 7,
                         "value": "2"
                       },
                       "directives": [
                         {
-                          "atPos": "1325",
+                          "atPos": "1391",
                           "name": "one"
                         },
                         {
-                          "atPos": "1330",
+                          "atPos": "1396",
                           "name": "two",
                           "args": {
-                            "lparen": "1334",
-                            "rparen": "1335"
+                            "lparen": "1400",
+                            "rparen": "1401"
                           }
                         }
                       ]
@@ -876,171 +908,171 @@
                         "list": [
                           {
                             "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                            "char": "1346"
+                            "char": "1412"
                           }
                         ]
                       },
                       "name": {
-                        "namePos": "1394",
+                        "namePos": "1460",
                         "name": "three"
                       },
                       "ident": {
-                        "namePos": "1401",
+                        "namePos": "1467",
                         "name": "Three"
                       },
                       "basicLit": {
-                        "valuePos": "1409",
+                        "valuePos": "1475",
                         "kind": 7,
                         "value": "3"
                       },
                       "directives": [
                         {
-                          "atPos": "1411",
+                          "atPos": "1477",
                           "name": "one"
                         },
                         {
-                          "atPos": "1416",
+                          "atPos": "1482",
                           "name": "two",
                           "args": {
-                            "lparen": "1420",
-                            "rparen": "1421"
+                            "lparen": "1486",
+                            "rparen": "1487"
                           }
                         },
                         {
-                          "atPos": "1423",
+                          "atPos": "1489",
                           "name": "three",
                           "args": {
-                            "lparen": "1429",
+                            "lparen": "1495",
                             "args": [
                               {
                                 "name": {
-                                  "namePos": "1430",
+                                  "namePos": "1496",
                                   "name": "a"
                                 },
                                 "basicLit": {
-                                  "valuePos": "1433",
+                                  "valuePos": "1499",
                                   "kind": 7,
                                   "value": "1"
                                 }
                               },
                               {
                                 "name": {
-                                  "namePos": "1436",
+                                  "namePos": "1502",
                                   "name": "b"
                                 },
                                 "basicLit": {
-                                  "valuePos": "1439",
+                                  "valuePos": "1505",
                                   "kind": 7,
                                   "value": "2"
                                 }
                               }
                             ],
-                            "rparen": "1440"
+                            "rparen": "1506"
                           }
                         }
                       ]
                     }
                   ],
-                  "closing": "1446"
+                  "closing": "1512"
                 },
                 "ident": {
-                  "namePos": "1449",
+                  "namePos": "1515",
                   "name": "Three"
                 },
                 "directives": [
                   {
-                    "atPos": "1455",
+                    "atPos": "1521",
                     "name": "one"
                   },
                   {
-                    "atPos": "1460",
+                    "atPos": "1526",
                     "name": "two",
                     "args": {
-                      "lparen": "1464",
-                      "rparen": "1465"
+                      "lparen": "1530",
+                      "rparen": "1531"
                     }
                   },
                   {
-                    "atPos": "1467",
+                    "atPos": "1533",
                     "name": "three",
                     "args": {
-                      "lparen": "1473",
+                      "lparen": "1539",
                       "args": [
                         {
                           "name": {
-                            "namePos": "1474",
+                            "namePos": "1540",
                             "name": "a"
                           },
                           "basicLit": {
-                            "valuePos": "1477",
+                            "valuePos": "1543",
                             "kind": 7,
                             "value": "1"
                           }
                         },
                         {
                           "name": {
-                            "namePos": "1480",
+                            "namePos": "1546",
                             "name": "b"
                           },
                           "basicLit": {
-                            "valuePos": "1483",
+                            "valuePos": "1549",
                             "kind": 7,
                             "value": "2"
                           }
                         }
                       ],
-                      "rparen": "1484"
+                      "rparen": "1550"
                     }
                   }
                 ]
               }
             ],
-            "closing": "1486"
+            "closing": "1552"
           }
         },
         "directives": [
           {
-            "atPos": "921",
+            "atPos": "987",
             "name": "one"
           },
           {
-            "atPos": "926",
+            "atPos": "992",
             "name": "two",
             "args": {
-              "lparen": "930",
-              "rparen": "931"
+              "lparen": "996",
+              "rparen": "997"
             }
           },
           {
-            "atPos": "933",
+            "atPos": "999",
             "name": "three",
             "args": {
-              "lparen": "939",
+              "lparen": "1005",
               "args": [
                 {
                   "name": {
-                    "namePos": "940",
+                    "namePos": "1006",
                     "name": "a"
                   },
                   "basicLit": {
-                    "valuePos": "943",
+                    "valuePos": "1009",
                     "kind": 7,
                     "value": "1"
                   }
                 },
                 {
                   "name": {
-                    "namePos": "946",
+                    "namePos": "1012",
                     "name": "b"
                   },
                   "basicLit": {
-                    "valuePos": "949",
+                    "valuePos": "1015",
                     "kind": 7,
                     "value": "2"
                   }
                 }
               ],
-              "rparen": "950"
+              "rparen": "1016"
             }
           }
         ]
@@ -1051,77 +1083,77 @@
         "list": [
           {
             "text": "\"Union description\"",
-            "char": "1489"
+            "char": "1555"
           }
         ]
       },
-      "tokPos": "1509",
+      "tokPos": "1575",
       "tok": 33,
       "typeSpec": {
         "name": {
-          "namePos": "1515",
+          "namePos": "1581",
           "name": "Test"
         },
         "union": {
-          "union": "1509",
+          "union": "1575",
           "members": [
             {
-              "namePos": "1553",
+              "namePos": "1619",
               "name": "One"
             },
             {
-              "namePos": "1559",
+              "namePos": "1625",
               "name": "Two"
             },
             {
-              "namePos": "1565",
+              "namePos": "1631",
               "name": "Three"
             }
           ]
         },
         "directives": [
           {
-            "atPos": "1520",
+            "atPos": "1586",
             "name": "one"
           },
           {
-            "atPos": "1525",
+            "atPos": "1591",
             "name": "two",
             "args": {
-              "lparen": "1529",
-              "rparen": "1530"
+              "lparen": "1595",
+              "rparen": "1596"
             }
           },
           {
-            "atPos": "1532",
+            "atPos": "1598",
             "name": "three",
             "args": {
-              "lparen": "1538",
+              "lparen": "1604",
               "args": [
                 {
                   "name": {
-                    "namePos": "1539",
+                    "namePos": "1605",
                     "name": "a"
                   },
                   "basicLit": {
-                    "valuePos": "1542",
+                    "valuePos": "1608",
                     "kind": 7,
                     "value": "1"
                   }
                 },
                 {
                   "name": {
-                    "namePos": "1545",
+                    "namePos": "1611",
                     "name": "b"
                   },
                   "basicLit": {
-                    "valuePos": "1548",
+                    "valuePos": "1614",
                     "kind": 7,
                     "value": "2"
                   }
                 }
               ],
-              "rparen": "1549"
+              "rparen": "1615"
             }
           }
         ]
@@ -1132,38 +1164,38 @@
         "list": [
           {
             "text": "\"Enum description\"",
-            "char": "1572"
+            "char": "1638"
           }
         ]
       },
-      "tokPos": "1591",
+      "tokPos": "1657",
       "tok": 30,
       "typeSpec": {
         "name": {
-          "namePos": "1596",
+          "namePos": "1662",
           "name": "Test"
         },
         "enum": {
-          "enum": "1591",
+          "enum": "1657",
           "values": {
-            "opening": "1611",
+            "opening": "1677",
             "list": [
               {
                 "doc": {
                   "list": [
                     {
                       "text": "\"One before\"",
-                      "char": "1617"
+                      "char": "1683"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "1630",
+                  "namePos": "1696",
                   "name": "ONE"
                 },
                 "directives": [
                   {
-                    "atPos": "1634",
+                    "atPos": "1700",
                     "name": "one"
                   }
                 ]
@@ -1173,21 +1205,21 @@
                   "list": [
                     {
                       "text": "\"\"\"\n    Two above\n    \"\"\"",
-                      "char": "1644"
+                      "char": "1710"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "1674",
+                  "namePos": "1740",
                   "name": "TWO"
                 },
                 "directives": [
                   {
-                    "atPos": "1678",
+                    "atPos": "1744",
                     "name": "one"
                   },
                   {
-                    "atPos": "1683",
+                    "atPos": "1749",
                     "name": "two"
                   }
                 ]
@@ -1197,44 +1229,44 @@
                   "list": [
                     {
                       "text": "\"Three above\"",
-                      "char": "1693"
+                      "char": "1759"
                     },
                     {
                       "text": "\"Three before\"",
-                      "char": "1711"
+                      "char": "1777"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "1726",
+                  "namePos": "1792",
                   "name": "THREE"
                 },
                 "directives": [
                   {
-                    "atPos": "1732",
+                    "atPos": "1798",
                     "name": "one"
                   },
                   {
-                    "atPos": "1737",
+                    "atPos": "1803",
                     "name": "two"
                   },
                   {
-                    "atPos": "1742",
+                    "atPos": "1808",
                     "name": "three"
                   }
                 ]
               }
             ],
-            "closing": "1749"
+            "closing": "1815"
           }
         },
         "directives": [
           {
-            "atPos": "1601",
+            "atPos": "1667",
             "name": "one"
           },
           {
-            "atPos": "1606",
+            "atPos": "1672",
             "name": "two"
           }
         ]
@@ -1245,46 +1277,46 @@
         "list": [
           {
             "text": "\"Input description\"",
-            "char": "1752"
+            "char": "1818"
           }
         ]
       },
-      "tokPos": "1772",
+      "tokPos": "1838",
       "tok": 34,
       "typeSpec": {
         "name": {
-          "namePos": "1778",
+          "namePos": "1844",
           "name": "Test"
         },
         "input": {
-          "input": "1772",
+          "input": "1838",
           "fields": {
-            "opening": "1793",
+            "opening": "1859",
             "list": [
               {
                 "doc": {
                   "list": [
                     {
                       "text": "\"One above\"",
-                      "char": "1799"
+                      "char": "1865"
                     },
                     {
                       "text": "\"One before\"",
-                      "char": "1815"
+                      "char": "1881"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "1828",
+                  "namePos": "1894",
                   "name": "one"
                 },
                 "ident": {
-                  "namePos": "1833",
+                  "namePos": "1899",
                   "name": "One"
                 },
                 "directives": [
                   {
-                    "atPos": "1837",
+                    "atPos": "1903",
                     "name": "one"
                   }
                 ]
@@ -1294,53 +1326,53 @@
                   "list": [
                     {
                       "text": "\"\"\"\n    Two multi above\n    \"\"\"",
-                      "char": "1847"
+                      "char": "1913"
                     },
                     {
                       "text": "\"Two single above\"",
-                      "char": "1883"
+                      "char": "1949"
                     },
                     {
                       "text": "\"Two before\"",
-                      "char": "1903"
+                      "char": "1969"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "1916",
+                  "namePos": "1982",
                   "name": "two"
                 },
                 "ident": {
-                  "namePos": "1921",
+                  "namePos": "1987",
                   "name": "Two"
                 },
                 "basicLit": {
-                  "valuePos": "1927",
+                  "valuePos": "1993",
                   "kind": 7,
                   "value": "2"
                 },
                 "directives": [
                   {
-                    "atPos": "1929",
+                    "atPos": "1995",
                     "name": "one"
                   },
                   {
-                    "atPos": "1934",
+                    "atPos": "2000",
                     "name": "two"
                   }
                 ]
               }
             ],
-            "closing": "1939"
+            "closing": "2005"
           }
         },
         "directives": [
           {
-            "atPos": "1783",
+            "atPos": "1849",
             "name": "one"
           },
           {
-            "atPos": "1788",
+            "atPos": "1854",
             "name": "two"
           }
         ]
@@ -1351,47 +1383,47 @@
         "list": [
           {
             "text": "\"Directive description\"",
-            "char": "1942"
+            "char": "2008"
           }
         ]
       },
-      "tokPos": "1966",
+      "tokPos": "2032",
       "tok": 36,
       "typeSpec": {
         "name": {
-          "namePos": "1977",
+          "namePos": "2043",
           "name": "test"
         },
         "directive": {
-          "directive": "1966",
+          "directive": "2032",
           "args": {
-            "opening": "1981",
+            "opening": "2047",
             "list": [
               {
                 "doc": {
                   "list": [
                     {
                       "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                      "char": "1991"
+                      "char": "2057"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "2039",
+                  "namePos": "2105",
                   "name": "one"
                 },
                 "ident": {
-                  "namePos": "2044",
+                  "namePos": "2110",
                   "name": "One"
                 },
                 "basicLit": {
-                  "valuePos": "2050",
+                  "valuePos": "2116",
                   "kind": 7,
                   "value": "1"
                 },
                 "directives": [
                   {
-                    "atPos": "2052",
+                    "atPos": "2118",
                     "name": "one"
                   }
                 ]
@@ -1401,57 +1433,57 @@
                   "list": [
                     {
                       "text": "\"\"\"\n        Arg description\n        \"\"\"",
-                      "char": "2065"
+                      "char": "2131"
                     }
                   ]
                 },
                 "name": {
-                  "namePos": "2113",
+                  "namePos": "2179",
                   "name": "two"
                 },
                 "ident": {
-                  "namePos": "2118",
+                  "namePos": "2184",
                   "name": "Two"
                 },
                 "basicLit": {
-                  "valuePos": "2124",
+                  "valuePos": "2190",
                   "kind": 7,
                   "value": "2"
                 },
                 "directives": [
                   {
-                    "atPos": "2126",
+                    "atPos": "2192",
                     "name": "one"
                   },
                   {
-                    "atPos": "2131",
+                    "atPos": "2197",
                     "name": "two"
                   }
                 ]
               }
             ],
-            "closing": "2140"
+            "closing": "2206"
           },
-          "onPos": "2142",
+          "onPos": "2208",
           "locs": [
             {
-              "start": "2145",
+              "start": "2211",
               "loc": 10
             },
             {
-              "start": "2154",
+              "start": "2220",
               "loc": 1
             },
             {
-              "start": "2162",
+              "start": "2228",
               "loc": 2
             },
             {
-              "start": "2173",
+              "start": "2239",
               "loc": 3
             },
             {
-              "start": "2188",
+              "start": "2254",
               "loc": 4
             }
           ]

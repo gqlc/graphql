@@ -888,7 +888,7 @@ func TestParser(t *testing.T) {
 			p.doc = doc
 
 			d := new(ast.Document)
-			p.parseDoc(d.Doc, &d.Types, &d.Directives)
+			p.parseDoc(&d.Types, &d.Directives)
 
 			compare(subT, d, testCase.Ex)
 		})

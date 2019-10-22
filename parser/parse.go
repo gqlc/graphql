@@ -191,7 +191,12 @@ func (p *parser) parse(tokDoc *token.Doc, b []byte, mode Mode) (doc *ast.Documen
 	doc = &ast.Document{
 		Name: p.name,
 	}
-	p.parseDoc(doc.Doc, &doc.Types, &doc.Directives)
+	docs := p.parseDoc(&doc.Types, &doc.Directives)
+	if len(docs) > 0 {
+		doc.Doc = &ast.DocGroup{
+			List: docs,
+		}
+	}
 
 	if p.schema != nil {
 		doc.Schema = p.schema
@@ -199,8 +204,8 @@ func (p *parser) parse(tokDoc *token.Doc, b []byte, mode Mode) (doc *ast.Documen
 	return
 }
 
-func (p *parser) parseDoc(pdg *ast.DocGroup, types *[]*ast.TypeDecl, directives *[]*ast.DirectiveLit) {
-	var docs []*ast.DocGroup_Doc
+func (p *parser) parseDoc(types *[]*ast.TypeDecl, directives *[]*ast.DirectiveLit) (docs []*ast.DocGroup_Doc) {
+	var cdocs []*ast.DocGroup_Doc
 	ts := new(ast.TypeSpec)
 	for {
 		item := p.next()
@@ -216,7 +221,7 @@ func (p *parser) parseDoc(pdg *ast.DocGroup, types *[]*ast.TypeDecl, directives 
 			}
 
 			ts.Reset()
-			p.parseDef(typ, &docs, ts)
+			p.parseDef(typ, &cdocs, ts)
 
 			extTs := *ts
 			td := &ast.TypeDecl{
@@ -230,17 +235,17 @@ func (p *parser) parseDoc(pdg *ast.DocGroup, types *[]*ast.TypeDecl, directives 
 					},
 				},
 			}
-			if dLen := len(docs); dLen > 0 {
+			if dLen := len(cdocs); dLen > 0 {
 				td.Doc = &ast.DocGroup{List: make([]*ast.DocGroup_Doc, dLen)}
-				copy(td.Doc.List, docs)
-				docs = docs[:0]
+				copy(td.Doc.List, cdocs)
+				cdocs = cdocs[:0]
 			}
 
 			*types = append(*types, td)
 		case item.Typ.IsKeyword():
 			ts.Reset()
 
-			p.parseDef(item, &docs, ts)
+			p.parseDef(item, &cdocs, ts)
 
 			tts := *ts
 			td := &ast.TypeDecl{
@@ -248,10 +253,10 @@ func (p *parser) parseDoc(pdg *ast.DocGroup, types *[]*ast.TypeDecl, directives 
 				Tok:    item.Typ,
 				Spec:   &ast.TypeDecl_TypeSpec{TypeSpec: &tts},
 			}
-			if dLen := len(docs); dLen > 0 {
+			if dLen := len(cdocs); dLen > 0 {
 				td.Doc = &ast.DocGroup{List: make([]*ast.DocGroup_Doc, dLen)}
-				copy(td.Doc.List, docs)
-				docs = docs[:0]
+				copy(td.Doc.List, cdocs)
+				cdocs = cdocs[:0]
 			}
 
 			*types = append(*types, td)
@@ -266,21 +271,21 @@ func (p *parser) parseDoc(pdg *ast.DocGroup, types *[]*ast.TypeDecl, directives 
 				Comment: item.Typ == token.Token_COMMENT,
 			}
 
-			if len(docs) == 0 {
-				docs = append(docs, d)
+			if len(cdocs) == 0 {
+				cdocs = append(cdocs, d)
 				break
 			}
 
-			prev := docs[len(docs)-1]
+			prev := cdocs[len(cdocs)-1]
 			lprev := p.doc.Line(token.Pos(int(prev.Char) + len(prev.Text)))
 			if p.doc.Line(token.Pos(d.Char))-lprev == 1 {
-				docs = append(docs, d)
+				cdocs = append(cdocs, d)
 				break
 			}
 
-			pdg.List = append(pdg.List, docs...)
-			docs = docs[:0]
-			docs = append(docs, d)
+			docs = append(docs, cdocs...)
+			cdocs = cdocs[:0]
+			cdocs = append(cdocs, d)
 		case item.Typ == token.Token_AT:
 			p.pk = item
 			p.parseDirectives(directives)
