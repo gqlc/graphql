@@ -4,7 +4,7 @@ syntax = "proto3";
 
 package gqlc.protobuf;
 
-option go_package = "github.com/gqlc/graphql/ast;ast";
+option go_package = "ast";
 
 import "token.proto";
 
