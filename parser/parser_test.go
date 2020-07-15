@@ -3,16 +3,17 @@ package parser
 import (
 	"bytes"
 	"flag"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
-	"github.com/gqlc/graphql/ast"
-	"github.com/gqlc/graphql/lexer"
-	"github.com/gqlc/graphql/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/proto"
+	"github.com/gqlc/graphql/ast"
+	"github.com/gqlc/graphql/lexer"
+	"github.com/gqlc/graphql/token"
 )
 
 var (
