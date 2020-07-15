@@ -98,3 +98,10 @@ func ParseDocs(dset *token.DocSet, docs map[string]io.Reader, mode Mode) ([]*ast
 	}
 	return odocs, nil
 }
+
+// ParseIntrospection parses the results of an introspection query. The results
+// in src should be JSON encoded.
+//
+func ParseIntrospection(dset *token.DocSet, name string, src io.Reader) (*ast.Document, error) {
+	return nil, nil
+}
