@@ -2,10 +2,14 @@ syntax = "proto3";
 
 package gqlc.protobuf;
 
-option go_package = "github.com/gqlc/graphql/token;token";
+import "gogo.proto";
+
+option go_package = "token";
 
 // Token contains all the lexical tokens for the GraphQL IDL
 enum Token {
+    option (gogoproto.goproto_enum_prefix) = false;
+
     UNKNOWN = 0;
     ERR = 1;
     EOF = 2;
