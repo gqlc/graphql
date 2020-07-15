@@ -3,8 +3,8 @@ package parser
 import (
 	"bytes"
 	"flag"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/gogo/protobuf/proto"
 	"github.com/gqlc/graphql/ast"
 	"github.com/gqlc/graphql/lexer"
 	"github.com/gqlc/graphql/token"
