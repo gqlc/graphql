@@ -77,6 +77,7 @@ func ParseDoc(dset *token.DocSet, name string, src io.Reader, mode Mode) (*ast.D
 		args:   make([]*ast.InputValue, 0, 5),
 		fargs:  make([]*ast.InputValue, 0, 5),
 	}
+	p.pk.Line = -1
 
 	return p.parse(d, b, mode)
 }
@@ -102,6 +103,37 @@ func ParseDocs(dset *token.DocSet, docs map[string]io.Reader, mode Mode) ([]*ast
 // ParseIntrospection parses the results of an introspection query. The results
 // in src should be JSON encoded.
 //
-func ParseIntrospection(dset *token.DocSet, name string, src io.Reader) (*ast.Document, error) {
-	return nil, nil
+func ParseIntrospection(dset *token.DocSet, name string, src io.Reader) (doc *ast.Document, err error) {
+	// Create parser and doc to doc set. Then, parse doc.
+	d := dset.AddDoc(name, -1, 500) // TODO: Get size of src
+	p := &parser{
+		name:   name,
+		dg:     make([]*ast.DocGroup_Doc, 0, 4),
+		cdg:    make([]*ast.DocGroup_Doc, 0, 4),
+		direcs: make([]*ast.DirectiveLit, 0, 4),
+		dargs:  make([]*ast.Arg, 0, 5),
+		fields: make([]*ast.Field, 0, 5),
+		args:   make([]*ast.InputValue, 0, 5),
+		fargs:  make([]*ast.InputValue, 0, 5),
+	}
+	p.pk.Line = -1
+
+	defer p.recover(&err)
+	p.l = scanIntrospect(d, name, src)
+	p.doc = d
+
+	doc = &ast.Document{
+		Name: p.name,
+	}
+	docs := p.parseDoc(&doc.Types, &doc.Directives)
+	if len(docs) > 0 {
+		doc.Doc = &ast.DocGroup{
+			List: docs,
+		}
+	}
+
+	if p.schema != nil {
+		doc.Schema = p.schema
+	}
+	return
 }

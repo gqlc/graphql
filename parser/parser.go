@@ -35,9 +35,9 @@ func (p *parser) next() (i lexer.Item) {
 		}
 	}()
 
-	if p.pk.Line != 0 {
+	if p.pk.Line != -1 {
 		i = p.pk
-		p.pk = lexer.Item{}
+		p.pk.Line = -1
 		return
 	}
 	return p.l.NextItem()
