@@ -49,7 +49,7 @@ func (p *parser) peek() lexer.Item {
 	return p.pk
 }
 
-func (p *parser) ignore() { p.pk = lexer.Item{} }
+func (p *parser) ignore() { p.pk.Line = -1 }
 
 // expect consumes the next token and guarantees it has the required type.
 func (p *parser) expect(tok token.Token, context string) lexer.Item {
