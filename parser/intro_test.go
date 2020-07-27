@@ -37,6 +37,54 @@ func TestParseIntrospection(t *testing.T) {
 			}
       `,
 		},
+		{
+			Name: "Interface",
+			Src: `interface Test {
+	a(b: B): A
+}`,
+			Intro: `
+      {
+			  "__schema": {
+			    "directives": [],
+			    "types": [
+			      {
+			        "kind": "INTERFACE",
+			        "name": "Test",
+			        "description": null,
+			        "fields": [
+								{
+									"name": "a",
+									"description": null,
+									"args": [
+										{
+											"name": "b",
+											"description": null,
+											"type": {
+												"kind": "OBJECT",
+												"name": "B"
+											},
+											"defaultValue": null
+										}
+									],
+									"type": {
+										"kind": "OBJECT",
+										"name": "A"
+									},
+									"isDeprecated": false,
+									"deprecationReason": null
+								}
+							],
+			        "interfaces": null,
+			        "possibleTypes": null,
+			        "enumValues": null,
+			        "inputFields": null,
+			        "ofType": null
+			      }
+			    ]
+			  }
+			}
+      `,
+		},
 	}
 
 	for _, testCase := range testCases {
