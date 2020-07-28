@@ -343,6 +343,21 @@ func (s *introScanner) tokenizeTypeDecl() {
 			if tok == nil {
 				break
 			}
+			if tok != json.Delim('[') {
+				s.unexpected(tok, "enum values opening")
+			}
+
+			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{"})
+			s.tokenizeObjList(&buf, "enum values closing", s.tokenizeField)
+
+			buf = buf[:len(buf)-1]
+			for _, i := range buf {
+				s.buf.insert(i.priority+4, i.item)
+			}
+			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}"})
+			buf = buf[:0]
+
+			s.line += 2
 		case "inputFields":
 			tok = s.next()
 			if tok == nil {
