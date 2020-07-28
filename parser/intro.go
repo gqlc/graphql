@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
+	"unicode"
 
 	"github.com/gqlc/graphql/lexer"
 	"github.com/gqlc/graphql/token"
@@ -363,6 +365,19 @@ func (s *introScanner) tokenizeTypeDecl() {
 			if tok == nil {
 				break
 			}
+			if tok != json.Delim('[') {
+				s.unexpected(tok, "input fields opening")
+			}
+
+			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{"})
+			s.tokenizeObjList(&buf, "input fields closing", s.tokenizeInputValue)
+
+			buf = buf[:len(buf)-1]
+			for _, i := range buf {
+				s.buf.insert(i.priority+4, i.item)
+			}
+			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}"})
+			buf = buf[:0]
 		case "ofType":
 			tok = s.next()
 			if tok != nil {
@@ -620,7 +635,8 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 			}
 
 			items.insert(iLen+3, lexer.Item{Typ: token.Token_ASSIGN, Val: "="})
-			// TODO: Tokenize defaultValue
+
+			s.tokenizeValue(items, iLen+3, defaultVal)
 		default:
 			s.unexpected(tok, "input value")
 		}
@@ -710,4 +726,27 @@ func (s *introScanner) tokenizeTypeSig(items *itemBuf) {
 			s.tokenizeTypeSig(items)
 		}
 	}
+}
+
+func (s *introScanner) tokenizeValue(items *itemBuf, priority int, val string) {
+	if val == "true" || val == "false" {
+		items.insert(priority, lexer.Item{Typ: token.Token_BOOL, Val: val})
+		return
+	}
+
+	if unicode.IsDigit(rune(val[0])) {
+		if strings.Contains(val, ".") {
+			items.insert(priority, lexer.Item{Typ: token.Token_FLOAT, Val: val})
+			return
+		}
+		items.insert(priority, lexer.Item{Typ: token.Token_INT, Val: val})
+		return
+	}
+
+	if strings.Contains(val, "\"") {
+		items.insert(priority, lexer.Item{Typ: token.Token_STRING, Val: val})
+		return
+	}
+
+	// TODO: Tokenize list and obj lits
 }
