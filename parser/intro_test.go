@@ -426,6 +426,69 @@ func TestParseIntrospection(t *testing.T) {
 			}
       `,
 		},
+		{
+			Name: "Directive",
+			Src:  "directive @test(a: Int! = 1, b: [Int] = [1,2,3], c: C = {hello: world}) on FIELD_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION",
+			Intro: `
+			{
+				"__schema": {
+					"types": [],
+					"directives": [
+						{
+							"description": null,
+							"name": "test",
+							"locations": [
+								"FIELD_DEFINITION",
+								"ENUM_VALUE",
+								"INPUT_FIELD_DEFINITION"
+							],
+							"args": [
+								{
+									"name": "a",
+									"description": null,
+									"type": {
+										"kind": "NON_NULL",
+										"name": null,
+										"ofType": {
+											"kind": "SCALAR",
+											"name": "Int",
+											"ofType": null
+										}
+									},
+									"defaultValue": "1"
+								},
+								{
+									"name": "b",
+									"description": null,
+									"type": {
+										"kind": "LIST",
+										"name": null,
+										"ofType": {
+											"kind": "SCALAR",
+											"name": "Int",
+											"ofType": null
+										}
+									},
+									"defaultValue": "[1,2,3]"
+								},
+								{
+									"name": "c",
+									"description": null,
+									"type": {
+										"kind": "OBJECT",
+										"name": "C",
+										"ofType": null
+									},
+									"defaultValue": "{\"hello\":\"world\"}"
+								}
+							],
+							"isRepeatable": false
+						}
+					]
+				}
+			}
+			`,
+		},
 	}
 
 	for _, testCase := range testCases {
