@@ -270,6 +270,40 @@ func TestParseIntrospection(t *testing.T) {
 			}
       `,
 		},
+		{
+			Name: "Union",
+			Src:  "union Test = A | B | C",
+			Intro: `
+      {
+			  "__schema": {
+			    "directives": [],
+			    "types": [
+			      {
+			        "kind": "UNION",
+			        "name": "Test",
+			        "description": null,
+			        "fields": null,
+			        "interfaces": null,
+			        "possibleTypes": [
+								{
+									"name": "A"
+								},
+								{
+									"name": "B"
+								},
+								{
+									"name": "C"
+								}
+							],
+			        "enumValues": null,
+			        "inputFields": null,
+			        "ofType": null
+			      }
+			    ]
+			  }
+			}
+      `,
+		},
 	}
 
 	for _, testCase := range testCases {
