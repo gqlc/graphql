@@ -304,6 +304,53 @@ func TestParseIntrospection(t *testing.T) {
 			}
       `,
 		},
+		{
+			Name: "Enum",
+			Src: `enum Test {
+	A
+	B
+	C
+}`,
+			Intro: `
+      {
+			  "__schema": {
+			    "directives": [],
+			    "types": [
+			      {
+			        "kind": "ENUM",
+			        "name": "Test",
+			        "description": null,
+			        "fields": null,
+			        "interfaces": null,
+			        "possibleTypes": null,
+			        "enumValues": [
+								{
+									"description": null,
+									"name": "A",
+									"isDeprecated": null,
+									"deprecationReason": null
+								},
+								{
+									"description": null,
+									"name": "B",
+									"isDeprecated": null,
+									"deprecationReason": null
+								},
+								{
+									"description": null,
+									"name": "C",
+									"isDeprecated": null,
+									"deprecationReason": null
+								}
+							],
+			        "inputFields": null,
+			        "ofType": null
+			      }
+			    ]
+			  }
+			}
+      `,
+		},
 	}
 
 	for _, testCase := range testCases {
