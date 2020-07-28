@@ -351,6 +351,81 @@ func TestParseIntrospection(t *testing.T) {
 			}
       `,
 		},
+		{
+			Name: "Input Object",
+			Src: `input Test {
+	a: [A!]!
+	b: String = "hello"
+	c: Int! = 1
+}`,
+			Intro: `
+      {
+			  "__schema": {
+			    "directives": [],
+			    "types": [
+			      {
+			        "kind": "INPUT_OBJECT",
+			        "name": "Test",
+			        "description": null,
+			        "fields": null,
+			        "interfaces": null,
+			        "possibleTypes": null,
+			        "enumValues": null,
+			        "inputFields": [
+								{
+									"name": "a",
+									"description": null,
+									"type": {
+										"kind": "NON_NULL",
+										"name": null,
+										"ofType": {
+											"kind": "LIST",
+											"name": null,
+											"ofType": {
+												"kind": "NON_NULL",
+												"name": null,
+												"ofType": {
+													"kind": "OBJECT",
+													"name": "A",
+													"ofType": null
+												}
+											}
+										}
+									},
+									"defaultValue": null
+								},
+								{
+									"name": "b",
+									"description": null,
+									"type": {
+										"kind": "SCALAR",
+										"name": "String",
+										"ofType": null
+									},
+									"defaultValue": "\"hello\""
+								},
+								{
+									"name": "c",
+									"description": null,
+									"type": {
+										"kind": "NON_NULL",
+										"name": null,
+										"ofType": {
+											"kind": "SCALAR",
+											"name": "Int",
+											"ofType": null
+										}
+									},
+									"defaultValue": "1"
+								}
+							],
+			        "ofType": null
+			      }
+			    ]
+			  }
+			}
+      `,
+		},
 	}
 
 	for _, testCase := range testCases {
