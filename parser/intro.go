@@ -217,6 +217,7 @@ func (s *introScanner) emitBuf() {
 		}
 
 		switch {
+		case item.Typ == token.Token_LBRACK, item.Typ == token.Token_RBRACK, item.Typ == token.Token_NOT:
 		case item.Typ == token.Token_LPAREN, item.Typ == token.Token_RPAREN:
 			inArgs = !inArgs
 			s.pos -= 1
@@ -296,6 +297,7 @@ func (s *introScanner) tokenizeTypeDecl() {
 				s.buf.insert(i.priority+4, i.item)
 			}
 			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}"})
+			buf = buf[:0]
 
 			s.line += 2
 		case "interfaces":
@@ -303,6 +305,19 @@ func (s *introScanner) tokenizeTypeDecl() {
 			if tok == nil {
 				break
 			}
+			if tok != json.Delim('[') {
+				s.unexpected(tok, "interfaces opening")
+			}
+
+			s.buf.insert(3, lexer.Item{Typ: token.Token_IMPLEMENTS, Val: "implements"})
+
+			s.tokenizeObjList(&buf, "interfaces closing", s.tokenizeInterface)
+
+			buf = buf[:len(buf)-1]
+			for _, i := range buf {
+				s.buf.insert(3, i.item)
+			}
+			buf = buf[:0]
 		case "possibleTypes":
 			tok = s.next()
 			if tok == nil {
@@ -363,6 +378,31 @@ func (s *introScanner) tokenizeObjList(items *itemBuf, context string, f func(i 
 
 		f(i, items)
 		i++
+	}
+}
+
+func (s *introScanner) tokenizeInterface(i int, items *itemBuf) {
+	for {
+		tok := s.next()
+		if tok == json.Delim('}') {
+			items.insert(0, lexer.Item{Typ: token.Token_AND, Val: "&", Line: s.line})
+			return
+		}
+
+		switch tok {
+		case "name":
+			tok = s.next()
+			if tok == nil {
+				break
+			}
+			n, ok := tok.(string)
+			if !ok {
+				s.unexpected(n, "name")
+			}
+
+			items.insert(0, lexer.Item{Typ: token.Token_IDENT, Val: n, Line: s.line})
+		default:
+		}
 	}
 }
 
@@ -538,11 +578,17 @@ const (
 )
 
 func (s *introScanner) tokenizeTypeSig(items *itemBuf) {
-	// signa := unknown
+	signa := ident
 
 	for {
 		tok := s.next()
 		if tok == json.Delim('}') {
+			if signa == list {
+				items.insert(0, lexer.Item{Typ: token.Token_RBRACK, Val: "]"})
+			}
+			if signa == nonNull {
+				items.insert(0, lexer.Item{Typ: token.Token_NOT, Val: "!"})
+			}
 			return
 		}
 
@@ -553,22 +599,31 @@ func (s *introScanner) tokenizeTypeSig(items *itemBuf) {
 				s.unexpected(tok, "type signature kind must be non-null")
 			}
 
-			// sig, ok := tok.(string)
-			// if !ok {
-			// 	s.unexpected(tok, "type signature kind should be a string")
-			// }
-			// signa = ident
+			sig, ok := tok.(string)
+			if !ok {
+				s.unexpected(tok, "type signature kind should be a string")
+			}
+			signa = ident
 
-			// if sig == "LIST" {
-			// 	signa = list
-			// 	*items = append(*items, lexer.Item{})
-			// 	copy((*items)[1:], (*items)[0:])
-			// 	(*items)[0] = lexer.Item{Typ: token.Token_LBRACK, Val: "["}
-			// }
-			//
-			// if sig == "NON_NULL" {
-			// 	signa = nonNull
-			// }
+			if sig == "LIST" {
+				signa = list
+				*items = append(*items, struct {
+					priority int
+					item     lexer.Item
+				}{})
+				copy((*items)[1:], (*items)[0:])
+				(*items)[0] = struct {
+					priority int
+					item     lexer.Item
+				}{
+					priority: 0,
+					item:     lexer.Item{Typ: token.Token_LBRACK, Val: "["},
+				}
+			}
+
+			if sig == "NON_NULL" {
+				signa = nonNull
+			}
 		case "name":
 			tok = s.next()
 			if tok == nil {
@@ -589,18 +644,11 @@ func (s *introScanner) tokenizeTypeSig(items *itemBuf) {
 			if tok == nil {
 				break
 			}
-			// if tok != json.Delim('{') {
-			// 	s.unexpected(tok, "type signature ofType")
-			// }
-			//
-			// s.tokenizeTypeSig(items)
-			//
-			// if signa == list {
-			// 	*items = append(*items, lexer.Item{Typ: token.Token_RBRACK, Val: "]"})
-			// }
-			// if signa == nonNull {
-			// 	*items = append(*items, lexer.Item{Typ: token.Token_NOT, Val: "!"})
-			// }
+			if tok != json.Delim('{') {
+				s.unexpected(tok, "type signature ofType")
+			}
+
+			s.tokenizeTypeSig(items)
 		}
 	}
 }
