@@ -222,7 +222,9 @@ func (s *introScanner) emitBuf() {
 			inArgs = !inArgs
 			s.pos -= 1
 			item.Pos -= 1
-		case !inArgs && (item.Typ == token.Token_COMMA || item.Typ == token.Token_LBRACE):
+		case item.Typ == token.Token_COMMA:
+			continue
+		case !inArgs && item.Typ == token.Token_LBRACE:
 			s.pos += 2
 		case inArgs && item.Typ == token.Token_COMMA:
 			s.pos += 1
@@ -417,10 +419,12 @@ func (s *introScanner) tokenizeField(i int, items *itemBuf) {
 	// 3 - type sig
 	// 4 - deprecated directive
 
+	iLen := len(*items)
+
 	for {
 		tok := s.next()
 		if tok == json.Delim('}') {
-			items.insert(3, lexer.Item{Typ: token.Token_COMMA, Val: ",", Line: i + 1})
+			items.insert(iLen+3, lexer.Item{Typ: token.Token_COMMA, Val: ",", Line: i + 1})
 			return
 		}
 
@@ -435,7 +439,7 @@ func (s *introScanner) tokenizeField(i int, items *itemBuf) {
 				s.unexpected(descr, "description")
 			}
 
-			items.insert(0, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr, Line: 2 * i})
+			items.insert(iLen, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr, Line: 2 * i})
 		case "name":
 			tok = s.next()
 			if tok == nil {
@@ -446,7 +450,7 @@ func (s *introScanner) tokenizeField(i int, items *itemBuf) {
 				s.unexpected(n, "name")
 			}
 
-			items.insert(1, lexer.Item{Typ: token.Token_IDENT, Val: n, Line: 2*i + 1})
+			items.insert(iLen+1, lexer.Item{Typ: token.Token_IDENT, Val: n, Line: 2*i + 1})
 		case "args":
 			tok = s.next()
 			if tok == nil {
@@ -458,14 +462,14 @@ func (s *introScanner) tokenizeField(i int, items *itemBuf) {
 
 			s.tokenizeObjList(&buf, "args closing", s.tokenizeInputValue)
 
-			items.insert(2, lexer.Item{Typ: token.Token_LPAREN, Val: "(", Line: 2*i + 1})
+			items.insert(iLen+2, lexer.Item{Typ: token.Token_LPAREN, Val: "(", Line: 2*i + 1})
 			buf = buf[:len(buf)-1]
 			for _, it := range buf {
 				it.item.Line = 2*i + 1
-				items.insert(2, it.item)
+				items.insert(iLen+2, it.item)
 			}
-			items.insert(2, lexer.Item{Typ: token.Token_RPAREN, Val: ")", Line: 2*i + 1})
-			items.insert(2, lexer.Item{Typ: token.Token_COLON, Val: ":", Line: 2*i + 1})
+			items.insert(iLen+2, lexer.Item{Typ: token.Token_RPAREN, Val: ")", Line: 2*i + 1})
+			items.insert(iLen+2, lexer.Item{Typ: token.Token_COLON, Val: ":", Line: 2*i + 1})
 			buf = buf[:0]
 		case "type":
 			tok = s.next()
@@ -480,7 +484,7 @@ func (s *introScanner) tokenizeField(i int, items *itemBuf) {
 
 			for _, it := range buf {
 				it.item.Line = i + 1
-				items.insert(3, it.item)
+				items.insert(iLen+3, it.item)
 			}
 			buf = buf[:0]
 		case "isDeprecated":
@@ -504,10 +508,12 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 	// 2 - type signature
 	// 3 - default value
 
+	iLen := len(*items)
+
 	for {
 		tok := s.next()
 		if tok == json.Delim('}') {
-			items.insert(3, lexer.Item{Typ: token.Token_COMMA, Val: ",", Line: i + 1})
+			items.insert(iLen+3, lexer.Item{Typ: token.Token_COMMA, Val: ",", Line: i + 1})
 			return
 		}
 
@@ -522,8 +528,8 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 				s.unexpected(n, "name")
 			}
 
-			items.insert(1, lexer.Item{Typ: token.Token_IDENT, Val: n})
-			items.insert(1, lexer.Item{Typ: token.Token_COLON, Val: ":"})
+			items.insert(iLen+1, lexer.Item{Typ: token.Token_IDENT, Val: n})
+			items.insert(iLen+1, lexer.Item{Typ: token.Token_COLON, Val: ":"})
 		case "description":
 			tok = s.next()
 			if tok == nil {
@@ -534,7 +540,7 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 				s.unexpected(descr, "description")
 			}
 
-			items.insert(0, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr})
+			items.insert(iLen, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr})
 		case "type":
 			tok = s.next()
 			if tok == nil {
@@ -547,7 +553,7 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 			s.tokenizeTypeSig(&buf)
 
 			for _, i := range buf {
-				items.insert(2, i.item)
+				items.insert(iLen+2, i.item)
 			}
 			buf = buf[:0]
 		case "defaultValue":
@@ -560,7 +566,7 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 				s.unexpected(defaultVal, "description")
 			}
 
-			items.insert(3, lexer.Item{Typ: token.Token_ASSIGN, Val: "="})
+			items.insert(iLen+3, lexer.Item{Typ: token.Token_ASSIGN, Val: "="})
 			// TODO: Tokenize defaultValue
 		default:
 			s.unexpected(tok, "input value")
