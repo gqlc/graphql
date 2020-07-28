@@ -325,6 +325,19 @@ func (s *introScanner) tokenizeTypeDecl() {
 			if tok == nil {
 				break
 			}
+			if tok != json.Delim('[') {
+				s.unexpected(tok, "union members opening")
+			}
+
+			s.buf.insert(3, lexer.Item{Typ: token.Token_ASSIGN, Val: "="})
+
+			s.tokenizeObjList(&buf, "union members closing", s.tokenizeMember)
+
+			buf = buf[:len(buf)-1]
+			for _, i := range buf {
+				s.buf.insert(4, i.item)
+			}
+			buf = buf[:0]
 		case "enumValues":
 			tok = s.next()
 			if tok == nil {
@@ -388,6 +401,31 @@ func (s *introScanner) tokenizeInterface(i int, items *itemBuf) {
 		tok := s.next()
 		if tok == json.Delim('}') {
 			items.insert(0, lexer.Item{Typ: token.Token_AND, Val: "&", Line: s.line})
+			return
+		}
+
+		switch tok {
+		case "name":
+			tok = s.next()
+			if tok == nil {
+				break
+			}
+			n, ok := tok.(string)
+			if !ok {
+				s.unexpected(n, "name")
+			}
+
+			items.insert(0, lexer.Item{Typ: token.Token_IDENT, Val: n, Line: s.line})
+		default:
+		}
+	}
+}
+
+func (s *introScanner) tokenizeMember(i int, items *itemBuf) {
+	for {
+		tok := s.next()
+		if tok == json.Delim('}') {
+			items.insert(0, lexer.Item{Typ: token.Token_OR, Val: "|", Line: s.line})
 			return
 		}
 
