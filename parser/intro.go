@@ -181,8 +181,24 @@ func scanDoc(s *introScanner) stateFn {
 
 func scanDirectives(s *introScanner) stateFn {
 	s.expect(json.Delim('['), "directives opening")
-	s.expect(json.Delim(']'), "directives closing")
-	return scanDoc
+
+	for {
+		s.line += 1
+
+		tok := s.next()
+		if tok == json.Delim(']') {
+			return scanDoc
+		}
+		if tok != json.Delim('{') {
+			s.unexpected(tok, "directive opening")
+		}
+
+		s.emit(token.Token_DIRECTIVE, "directive")
+
+		s.tokenizeDirectiveDecl()
+
+		s.emitBuf()
+	}
 }
 
 func scanTypes(s *introScanner) stateFn {
@@ -239,6 +255,116 @@ func (s *introScanner) emitBuf() {
 		s.emitItem(item)
 	}
 	s.buf = s.buf[:0]
+}
+
+func (s *introScanner) tokenizeDirectiveDecl() {
+	buf := make(itemBuf, 0, 12) // "descr" ident("descr" arg: Type = "default"): Type
+
+	// Priorities:
+	// 0 - description
+	// 1 - @,name
+	// 2 - args
+	// 3 - repeatable
+	// 4 - on, locations
+
+	for {
+		tok := s.next()
+		if tok == json.Delim('}') {
+			return
+		}
+
+		switch tok {
+		case "description":
+			tok = s.next()
+			if tok == nil {
+				break
+			}
+
+			descr, ok := tok.(string)
+			if !ok {
+				s.unexpected(tok, "description must be a string")
+			}
+
+			s.buf.insert(0, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr})
+		case "name":
+			tok = s.next()
+			if tok == nil {
+				break
+			}
+
+			name, ok := tok.(string)
+			if !ok {
+				s.unexpected(tok, "name must be a string")
+			}
+
+			s.buf.insert(1, lexer.Item{Typ: token.Token_AT, Val: "@"})
+			s.buf.insert(1, lexer.Item{Typ: token.Token_IDENT, Val: name})
+		case "locations":
+			tok = s.next()
+			if tok == nil {
+				break
+			}
+			if tok != json.Delim('[') {
+				s.unexpected(tok, "locations opening")
+			}
+
+			s.buf.insert(4, lexer.Item{Typ: token.Token_ON, Val: "on"})
+
+			s.tokenizeLocations(&s.buf, 4)
+			s.buf = s.buf[:len(s.buf)-1]
+		case "args":
+			tok = s.next()
+			if tok == nil {
+				break
+			}
+			if tok != json.Delim('[') {
+				s.unexpected(tok, "args opening")
+			}
+
+			s.tokenizeObjList(&buf, "args closing", s.tokenizeInputValue)
+
+			s.buf.insert(2, lexer.Item{Typ: token.Token_LPAREN, Val: "("})
+			buf = buf[:len(buf)-1]
+			for _, i := range buf {
+				s.buf.insert(2, i.item)
+			}
+			s.buf.insert(2, lexer.Item{Typ: token.Token_RPAREN, Val: ")"})
+
+			buf = buf[:0]
+		case "isRepeatable":
+			tok = s.next()
+			if tok == nil {
+				break
+			}
+
+			b, ok := tok.(bool)
+			if !ok {
+				s.unexpected(tok, "isRepeatable must be a bool")
+			}
+			if !b {
+				break
+			}
+
+			s.buf.insert(3, lexer.Item{Typ: token.Token_REPEATABLE, Val: "repeatable"})
+		}
+	}
+}
+
+func (s *introScanner) tokenizeLocations(items *itemBuf, priority int) {
+	for {
+		tok := s.next()
+		if tok == json.Delim(']') {
+			return
+		}
+
+		loc, ok := tok.(string)
+		if !ok {
+			s.unexpected(tok, "directive location should be a string")
+		}
+
+		items.insert(priority, lexer.Item{Typ: token.Token_IDENT, Val: loc})
+		items.insert(priority, lexer.Item{Typ: token.Token_OR, Val: "|"})
+	}
 }
 
 func (s *introScanner) tokenizeTypeDecl() {
@@ -743,10 +869,77 @@ func (s *introScanner) tokenizeValue(items *itemBuf, priority int, val string) {
 		return
 	}
 
-	if strings.Contains(val, "\"") {
+	switch val[0] {
+	case '"':
 		items.insert(priority, lexer.Item{Typ: token.Token_STRING, Val: val})
-		return
+	case '[':
+		s.tokenizeListLit(items, priority, val)
+	case '{':
+		s.tokenizeObjLit(items, priority, val)
+	default:
+		s.errorf("invalid default value: %s", val)
 	}
+}
 
-	// TODO: Tokenize list and obj lits
+func (s *introScanner) tokenizeListLit(items *itemBuf, priority int, val string) {
+	items.insert(priority, lexer.Item{Typ: token.Token_LBRACK, Val: "["})
+
+	end := 0
+	for {
+		val = val[end+1:]
+		if len(val) == 0 {
+			items.insert(priority, lexer.Item{Typ: token.Token_RBRACK, Val: "]"})
+			return
+		}
+
+		switch val[0] {
+		case '{':
+			s.tokenizeObjLit(items, priority, val)
+		case '[':
+			s.tokenizeListLit(items, priority, val)
+		default:
+			end = strings.Index(val, ",")
+			if end == -1 {
+				end = len(val) - 1
+			}
+
+			s.tokenizeValue(items, priority, val[:end])
+		}
+	}
+}
+
+func (s *introScanner) tokenizeObjLit(items *itemBuf, priority int, val string) {
+	items.insert(priority, lexer.Item{Typ: token.Token_LBRACE, Val: "{"})
+
+	end := 0
+	for {
+		val = val[end+1:]
+		if len(val) == 0 {
+			items.insert(priority, lexer.Item{Typ: token.Token_RBRACE, Val: "}"})
+			return
+		}
+
+		end = strings.Index(val, ":")
+		if end == -1 {
+			s.errorf("missing colon in object literal")
+		}
+
+		items.insert(priority, lexer.Item{Typ: token.Token_IDENT, Val: val[:end]})
+		items.insert(priority, lexer.Item{Typ: token.Token_COLON, Val: ":"})
+		val = val[end+1:]
+
+		switch val[0] {
+		case '{':
+			s.tokenizeObjLit(items, priority, val)
+		case '[':
+			s.tokenizeListLit(items, priority, val)
+		default:
+			end = strings.Index(val, ",")
+			if end == -1 {
+				end = len(val) - 1
+			}
+
+			s.tokenizeValue(items, priority, val[:end])
+		}
+	}
 }
