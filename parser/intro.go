@@ -223,6 +223,7 @@ func scanTypes(s *introScanner) stateFn {
 
 func (s *introScanner) emitBuf() {
 	inArgs := false
+	inList := false
 	for i, itemP := range s.buf {
 		item := itemP.item
 
@@ -235,17 +236,29 @@ func (s *introScanner) emitBuf() {
 		}
 
 		switch {
-		case item.Typ == token.Token_LBRACK, item.Typ == token.Token_RBRACK, item.Typ == token.Token_NOT:
+		case item.Typ == token.Token_ON:
+			s.pos += 2
+			item.Pos += 1
+		case inList && item.Typ == token.Token_RBRACK:
+			item.Pos -= 1
+			inList = !inList
+		case item.Typ == token.Token_LBRACK:
+			inList = !inList
+		case item.Typ == token.Token_NOT:
 		case item.Typ == token.Token_LPAREN, item.Typ == token.Token_RPAREN:
 			inArgs = !inArgs
 			s.pos -= 1
 			item.Pos -= 1
+		case inList && item.Typ == token.Token_COMMA:
+			s.pos += 1
+			continue
 		case item.Typ == token.Token_COMMA:
 			continue
 		case !inArgs && item.Typ == token.Token_LBRACE:
 			s.pos += 2
-		case inArgs && item.Typ == token.Token_COMMA:
-			s.pos += 1
+		case inArgs && item.Typ == token.Token_LBRACE:
+		case inArgs && item.Typ == token.Token_RBRACE:
+			item.Pos -= 1
 		default:
 			if s.buf[i+1].item.Typ != token.Token_COLON {
 				s.pos += 1
