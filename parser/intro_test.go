@@ -428,7 +428,7 @@ func TestParseIntrospection(t *testing.T) {
 		},
 		{
 			Name: "Directive",
-			Src:  "directive @test(a: Int! = 1, b: [Int] = [1,2,3], c: C = {hello: \"world\"}) on FIELD_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION",
+			Src:  "directive @test(a: Int! = 1, b: [Int] = [1,2,3], c: C = {hello: \"world\",good: \"bye\"}) on FIELD_DEFINITION | ENUM_VALUE | INPUT_FIELD_DEFINITION",
 			Intro: `
 			{
 				"__schema": {
@@ -479,7 +479,7 @@ func TestParseIntrospection(t *testing.T) {
 										"name": "C",
 										"ofType": null
 									},
-									"defaultValue": "{\"hello\":\"world\"}"
+									"defaultValue": "{hello:\"world\",good:\"bye\"}"
 								}
 							],
 							"isRepeatable": false
