@@ -198,6 +198,7 @@ func scanDirectives(s *introScanner) stateFn {
 		s.tokenizeDirectiveDecl()
 
 		s.emitBuf()
+		s.pos += 2
 	}
 }
 
@@ -218,6 +219,7 @@ func scanTypes(s *introScanner) stateFn {
 		s.tokenizeTypeDecl()
 
 		s.emitBuf()
+		s.pos += 2
 	}
 }
 
