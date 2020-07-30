@@ -1,4 +1,4 @@
-package parser
+package introspect
 
 import (
 	"encoding/json"
@@ -11,7 +11,8 @@ import (
 	"github.com/gqlc/graphql/token"
 )
 
-func scanIntrospect(doc *token.Doc, name string, src io.Reader) lexer.Interface {
+// Lex tokenize the results of an introspection query.
+func Lex(doc *token.Doc, name string, src io.Reader) lexer.Interface {
 	s := &introScanner{
 		dec:   json.NewDecoder(src),
 		doc:   doc,

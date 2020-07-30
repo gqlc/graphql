@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/gqlc/graphql/ast"
+	"github.com/gqlc/graphql/lexer/introspect"
 	"github.com/gqlc/graphql/token"
 )
 
@@ -119,7 +120,7 @@ func ParseIntrospection(dset *token.DocSet, name string, src io.Reader) (doc *as
 	p.pk.Line = -1
 
 	defer p.recover(&err)
-	p.l = scanIntrospect(d, name, src)
+	p.l = introspect.Lex(d, name, src)
 	p.doc = d
 
 	doc = &ast.Document{
