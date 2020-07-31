@@ -119,11 +119,11 @@ func (p *parser) parseDoc(types *[]*ast.TypeDecl, directives *[]*ast.DirectiveLi
 	for {
 		item := p.next()
 		switch {
-		case item.Typ == token.Token_EOF:
+		case item.Typ == token.EOF:
 			return
-		case item.Typ == token.Token_ERR:
+		case item.Typ == token.ERR:
 			p.unexpected(item, "parseDoc")
-		case item.Typ == token.Token_EXTEND:
+		case item.Typ == token.EXTEND:
 			typ := p.next()
 			if !typ.Typ.IsKeyword() {
 				p.unexpected(typ, "parseDef:Extension")
@@ -170,14 +170,14 @@ func (p *parser) parseDoc(types *[]*ast.TypeDecl, directives *[]*ast.DirectiveLi
 
 			*types = append(*types, td)
 
-			if item.Typ == token.Token_SCHEMA {
+			if item.Typ == token.SCHEMA {
 				p.schema = td
 			}
-		case item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 || item.Typ == token.Token_DESCRIPTION:
+		case item.Typ == token.COMMENT && p.mode&ParseComments != 0 || item.Typ == token.DESCRIPTION:
 			d := &ast.DocGroup_Doc{
 				Text:    item.Val,
 				Char:    int64(item.Pos),
-				Comment: item.Typ == token.Token_COMMENT,
+				Comment: item.Typ == token.COMMENT,
 			}
 
 			if len(cdocs) == 0 {
@@ -195,10 +195,10 @@ func (p *parser) parseDoc(types *[]*ast.TypeDecl, directives *[]*ast.DirectiveLi
 			docs = append(docs, cdocs...)
 			cdocs = cdocs[:0]
 			cdocs = append(cdocs, d)
-		case item.Typ == token.Token_AT:
+		case item.Typ == token.AT:
 			p.pk = item
 			p.parseDirectives(directives)
-		case item.Typ == token.Token_COMMENT:
+		case item.Typ == token.COMMENT:
 		default:
 			p.unexpected(item, "parseDoc:UnknownToken")
 		}
@@ -207,21 +207,21 @@ func (p *parser) parseDoc(types *[]*ast.TypeDecl, directives *[]*ast.DirectiveLi
 
 func (p *parser) parseDef(item lexer.Item, docs *[]*ast.DocGroup_Doc, ts *ast.TypeSpec) {
 	switch item.Typ {
-	case token.Token_TYPE:
+	case token.TYPE:
 		p.parseObject(item.Pos, item.Line, docs, ts)
-	case token.Token_INPUT:
+	case token.INPUT:
 		p.parseInput(item.Pos, item.Line, docs, ts)
-	case token.Token_INTERFACE:
+	case token.INTERFACE:
 		p.parseInterface(item.Pos, item.Line, docs, ts)
-	case token.Token_UNION:
+	case token.UNION:
 		p.parseUnion(item.Pos, item.Line, docs, ts)
-	case token.Token_ENUM:
+	case token.ENUM:
 		p.parseEnum(item.Pos, item.Line, docs, ts)
-	case token.Token_SCALAR:
+	case token.SCALAR:
 		p.parseScalar(item.Pos, item.Line, docs, ts)
-	case token.Token_DIRECTIVE:
+	case token.DIRECTIVE:
 		p.parseDirective(item.Pos, item.Line, docs, ts)
-	case token.Token_SCHEMA:
+	case token.SCHEMA:
 		p.parseSchema(item.Pos, item.Line, docs, ts)
 	default:
 		p.errorf("unknown type")
@@ -231,17 +231,17 @@ func (p *parser) parseDef(item lexer.Item, docs *[]*ast.DocGroup_Doc, ts *ast.Ty
 func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 	for {
 		item := p.next() // This should always be served out of p.pk
-		if item.Typ == token.Token_ERR {
+		if item.Typ == token.ERR {
 			p.unexpected(item, "parseDirectives")
 		}
-		if item.Typ == token.Token_EOF {
+		if item.Typ == token.EOF {
 			*directives = append(*directives, p.direcs...)
 			p.direcs = p.direcs[:0]
 			p.pk = item
 			return
 		}
 
-		name := p.expect(token.Token_IDENT, "parseDirectives:MustHaveName")
+		name := p.expect(token.IDENT, "parseDirectives:MustHaveName")
 
 		dir := &ast.DirectiveLit{
 			AtPos: int64(item.Pos),
@@ -250,7 +250,7 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 		p.direcs = append(p.direcs, dir)
 
 		item = p.peek()
-		if item.Typ == token.Token_LPAREN {
+		if item.Typ == token.LPAREN {
 			dir.Args = &ast.CallExpr{
 				Lparen: int64(item.Pos),
 			}
@@ -258,26 +258,26 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 
 			for {
 				item = p.next()
-				if item.Typ == token.Token_ERR || item.Typ == token.Token_EOF {
+				if item.Typ == token.ERR || item.Typ == token.EOF {
 					p.unexpected(item, "parseDirectives:MalformedArg")
 				}
-				if item.Typ == token.Token_RPAREN {
+				if item.Typ == token.RPAREN {
 					dir.Args.Args = append(dir.Args.Args, p.dargs...)
 					p.dargs = p.dargs[:0]
 					break
 				}
-				if item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 {
+				if item.Typ == token.COMMENT && p.mode&ParseComments != 0 {
 					continue // TODO
 				}
 
-				if item.Typ != token.Token_IDENT {
+				if item.Typ != token.IDENT {
 					p.unexpected(item, "parseDirectives:MissingArgName")
 				}
 
 				arg := &ast.Arg{
 					Name: &ast.Ident{NamePos: int64(item.Pos), Name: item.Val},
 				}
-				p.expect(token.Token_COLON, "parseDirectives:MissingColon")
+				p.expect(token.COLON, "parseDirectives:MissingColon")
 
 				val := p.parseValue()
 				switch v := val.(type) {
@@ -295,7 +295,7 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 			item = p.peek()
 		}
 
-		if item.Typ != token.Token_AT || item.Line != p.line { // Enforce directives being on the same line
+		if item.Typ != token.AT || item.Line != p.line { // Enforce directives being on the same line
 			*directives = append(*directives, p.direcs...)
 			p.direcs = p.direcs[:0]
 			return
@@ -304,7 +304,7 @@ func (p *parser) parseDirectives(directives *[]*ast.DirectiveLit) {
 }
 
 func (p *parser) parseObject(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, ts *ast.TypeSpec) {
-	name := p.expect(token.Token_IDENT, "parseObject:MustHaveName")
+	name := p.expect(token.IDENT, "parseObject:MustHaveName")
 
 	ts.Name = &ast.Ident{
 		NamePos: int64(name.Pos),
@@ -316,16 +316,16 @@ func (p *parser) parseObject(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc,
 	ts.Type = &ast.TypeSpec_Object{Object: obj}
 
 	item := p.peek()
-	if item.Typ == token.Token_IMPLEMENTS {
+	if item.Typ == token.IMPLEMENTS {
 		p.ignore()
 		obj.ImplPos = int64(item.Pos)
 
 		for {
 			item = p.peek()
-			if item.Typ != token.Token_IDENT && item.Typ != token.Token_AND {
+			if item.Typ != token.IDENT && item.Typ != token.AND {
 				break
 			}
-			if item.Typ == token.Token_AND {
+			if item.Typ == token.AND {
 				p.ignore()
 				continue
 			}
@@ -334,12 +334,12 @@ func (p *parser) parseObject(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc,
 		}
 	}
 
-	if item.Typ == token.Token_AT {
+	if item.Typ == token.AT {
 		p.parseDirectives(&ts.Directives)
 		item = p.pk
 	}
 
-	if item.Typ != token.Token_LBRACE {
+	if item.Typ != token.LBRACE {
 		return
 	}
 	p.ignore()
@@ -352,7 +352,7 @@ func (p *parser) parseObject(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc,
 }
 
 func (p *parser) parseInput(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, ts *ast.TypeSpec) {
-	name := p.expect(token.Token_IDENT, "parseInput:MustHaveName")
+	name := p.expect(token.IDENT, "parseInput:MustHaveName")
 
 	ts.Name = &ast.Ident{
 		NamePos: int64(name.Pos),
@@ -364,12 +364,12 @@ func (p *parser) parseInput(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, 
 	ts.Type = &ast.TypeSpec_Input{Input: input}
 
 	item := p.peek()
-	if item.Typ == token.Token_AT {
+	if item.Typ == token.AT {
 		p.parseDirectives(&ts.Directives)
 		item = p.pk
 	}
 
-	if item.Typ != token.Token_LBRACE {
+	if item.Typ != token.LBRACE {
 		return
 	}
 	p.ignore()
@@ -381,7 +381,7 @@ func (p *parser) parseInput(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, 
 }
 
 func (p *parser) parseInterface(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, ts *ast.TypeSpec) {
-	name := p.expect(token.Token_IDENT, "parseInterface:MustHaveName")
+	name := p.expect(token.IDENT, "parseInterface:MustHaveName")
 
 	ts.Name = &ast.Ident{
 		NamePos: int64(name.Pos),
@@ -393,12 +393,12 @@ func (p *parser) parseInterface(pos token.Pos, line int, docs *[]*ast.DocGroup_D
 	ts.Type = &ast.TypeSpec_Interface{Interface: inter}
 
 	item := p.peek()
-	if item.Typ == token.Token_AT {
+	if item.Typ == token.AT {
 		p.parseDirectives(&ts.Directives)
 		item = p.pk
 	}
 
-	if item.Typ != token.Token_LBRACE {
+	if item.Typ != token.LBRACE {
 		return
 	}
 	p.ignore()
@@ -410,7 +410,7 @@ func (p *parser) parseInterface(pos token.Pos, line int, docs *[]*ast.DocGroup_D
 }
 
 func (p *parser) parseUnion(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, ts *ast.TypeSpec) {
-	name := p.expect(token.Token_IDENT, "parseUnion:MustHaveName")
+	name := p.expect(token.IDENT, "parseUnion:MustHaveName")
 
 	ts.Name = &ast.Ident{
 		NamePos: int64(name.Pos),
@@ -422,22 +422,22 @@ func (p *parser) parseUnion(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, 
 	ts.Type = &ast.TypeSpec_Union{Union: union}
 
 	item := p.peek()
-	if item.Typ == token.Token_AT {
+	if item.Typ == token.AT {
 		p.parseDirectives(&ts.Directives)
 		item = p.pk
 	}
 
-	if item.Typ != token.Token_ASSIGN {
+	if item.Typ != token.ASSIGN {
 		return
 	}
 	p.ignore()
 
 	for {
 		item = p.peek()
-		if item.Typ != token.Token_IDENT && item.Typ != token.Token_OR {
+		if item.Typ != token.IDENT && item.Typ != token.OR {
 			return
 		}
-		if item.Typ == token.Token_OR {
+		if item.Typ == token.OR {
 			continue
 		}
 
@@ -446,7 +446,7 @@ func (p *parser) parseUnion(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, 
 }
 
 func (p *parser) parseEnum(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, ts *ast.TypeSpec) {
-	name := p.expect(token.Token_IDENT, "parseEnum:MustHaveName")
+	name := p.expect(token.IDENT, "parseEnum:MustHaveName")
 
 	ts.Name = &ast.Ident{
 		NamePos: int64(name.Pos),
@@ -458,12 +458,12 @@ func (p *parser) parseEnum(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, t
 	ts.Type = &ast.TypeSpec_Enum{Enum: enum}
 
 	item := p.peek()
-	if item.Typ == token.Token_AT {
+	if item.Typ == token.AT {
 		p.parseDirectives(&ts.Directives)
 		item = p.pk
 	}
 
-	if item.Typ != token.Token_LBRACE {
+	if item.Typ != token.LBRACE {
 		return
 	}
 	p.ignore()
@@ -475,7 +475,7 @@ func (p *parser) parseEnum(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, t
 }
 
 func (p *parser) parseScalar(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, ts *ast.TypeSpec) {
-	name := p.expect(token.Token_IDENT, "parseScalar:MustHaveName")
+	name := p.expect(token.IDENT, "parseScalar:MustHaveName")
 
 	ts.Name = &ast.Ident{
 		NamePos: int64(name.Pos),
@@ -490,15 +490,15 @@ func (p *parser) parseScalar(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc,
 	}
 
 	item := p.peek()
-	if item.Typ == token.Token_AT && item.Line == line {
+	if item.Typ == token.AT && item.Line == line {
 		p.parseDirectives(&ts.Directives)
 	}
 }
 
 func (p *parser) parseDirective(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc, ts *ast.TypeSpec) {
-	p.expect(token.Token_AT, "parseDirective")
+	p.expect(token.AT, "parseDirective")
 	name := p.next()
-	if name.Typ != token.Token_IDENT && !name.Typ.IsKeyword() {
+	if name.Typ != token.IDENT && !name.Typ.IsKeyword() {
 		p.unexpected(name, "parseDirective:MustHaveName")
 	}
 
@@ -512,7 +512,7 @@ func (p *parser) parseDirective(pos token.Pos, line int, docs *[]*ast.DocGroup_D
 	ts.Type = &ast.TypeSpec_Directive{Directive: directive}
 
 	item := p.next()
-	if item.Typ == token.Token_LPAREN {
+	if item.Typ == token.LPAREN {
 		directive.Args = &ast.InputValueList{
 			Opening: int64(item.Pos),
 		}
@@ -520,17 +520,17 @@ func (p *parser) parseDirective(pos token.Pos, line int, docs *[]*ast.DocGroup_D
 		item = p.next()
 	}
 
-	if item.Typ != token.Token_ON {
+	if item.Typ != token.ON {
 		p.unexpected(item, "parseDirective:MissingOnKeyword")
 	}
 	directive.OnPos = int64(item.Pos)
 
 	for {
 		item = p.peek()
-		if item.Typ != token.Token_IDENT && item.Typ != token.Token_OR {
+		if item.Typ != token.IDENT && item.Typ != token.OR {
 			return
 		}
-		if item.Typ == token.Token_OR {
+		if item.Typ == token.OR {
 			continue
 		}
 
@@ -553,12 +553,12 @@ func (p *parser) parseSchema(pos token.Pos, line int, docs *[]*ast.DocGroup_Doc,
 	ts.Type = &ast.TypeSpec_Schema{Schema: schema}
 
 	item := p.peek()
-	if item.Typ == token.Token_AT {
+	if item.Typ == token.AT {
 		p.parseDirectives(&ts.Directives)
 		item = p.pk
 	}
 
-	if item.Typ != token.Token_LBRACE {
+	if item.Typ != token.LBRACE {
 		return
 	}
 	p.ignore()
@@ -573,21 +573,21 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 	for {
 		item := p.next()
 		switch {
-		case item.Typ == token.Token_RBRACE:
+		case item.Typ == token.RBRACE:
 			*docs = append(*docs, p.dg...)
 			p.dg = p.dg[:0]
 
 			*fields = append(*fields, p.fields...)
 			p.fields = p.fields[:0]
 			return int64(item.Pos)
-		case item.Typ == token.Token_IDENT || item.Typ.IsKeyword():
+		case item.Typ == token.IDENT || item.Typ.IsKeyword():
 			f := &ast.Field{
 				Name: &ast.Ident{NamePos: int64(item.Pos), Name: item.Val},
 			}
 			p.fields = append(p.fields, f)
 
 			item = p.peek()
-			if item.Typ == token.Token_LPAREN {
+			if item.Typ == token.LPAREN {
 				p.ignore()
 				f.Args = &ast.InputValueList{
 					Opening: int64(item.Pos),
@@ -602,7 +602,7 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 
 				item = p.peek()
 			}
-			if item.Typ != token.Token_COLON {
+			if item.Typ != token.COLON {
 				p.unexpected(item, "parseFields:ExpectedColon")
 			}
 			p.ignore()
@@ -624,15 +624,15 @@ func (p *parser) parseFields(docs *[]*ast.DocGroup_Doc, fields *[]*ast.Field) in
 			}
 
 			p.pk = p.next()
-			if p.pk.Typ != token.Token_AT {
+			if p.pk.Typ != token.AT {
 				break
 			}
 			p.parseDirectives(&f.Directives)
-		case item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 || item.Typ == token.Token_DESCRIPTION:
+		case item.Typ == token.COMMENT && p.mode&ParseComments != 0 || item.Typ == token.DESCRIPTION:
 			d := &ast.DocGroup_Doc{
 				Text:    item.Val,
 				Char:    int64(item.Pos),
-				Comment: item.Typ == token.Token_COMMENT,
+				Comment: item.Typ == token.COMMENT,
 			}
 
 			if len(p.dg) == 0 {
@@ -660,14 +660,14 @@ func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue
 	for {
 		item := p.next()
 		switch {
-		case item.Typ == token.Token_RPAREN || item.Typ == token.Token_RBRACE:
+		case item.Typ == token.RPAREN || item.Typ == token.RBRACE:
 			*docs = append(*docs, p.cdg...)
 			p.cdg = p.cdg[:0]
 
 			*args = append(*args, p.args...)
 			p.args = p.args[:0]
 			return int64(item.Pos)
-		case item.Typ == token.Token_IDENT || item.Typ.IsKeyword():
+		case item.Typ == token.IDENT || item.Typ.IsKeyword():
 			arg := &ast.InputValue{
 				Name: &ast.Ident{NamePos: int64(item.Pos), Name: item.Val},
 			}
@@ -679,7 +679,7 @@ func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue
 				p.cdg = p.cdg[:0]
 			}
 
-			p.expect(token.Token_COLON, "parseArgDefs:ExpectedColon")
+			p.expect(token.COLON, "parseArgDefs:ExpectedColon")
 
 			typ := p.parseType()
 			switch v := typ.(type) {
@@ -692,7 +692,7 @@ func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue
 			}
 
 			p.pk = p.next()
-			if p.pk.Typ == token.Token_ASSIGN {
+			if p.pk.Typ == token.ASSIGN {
 				p.ignore()
 
 				val := p.parseValue()
@@ -706,15 +706,15 @@ func (p *parser) parseArgDefs(docs *[]*ast.DocGroup_Doc, args *[]*ast.InputValue
 				p.pk = p.next()
 			}
 
-			if p.pk.Typ != token.Token_AT {
+			if p.pk.Typ != token.AT {
 				break
 			}
 			p.parseDirectives(&arg.Directives)
-		case item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 || item.Typ == token.Token_DESCRIPTION:
+		case item.Typ == token.COMMENT && p.mode&ParseComments != 0 || item.Typ == token.DESCRIPTION:
 			d := &ast.DocGroup_Doc{
 				Text:    item.Val,
 				Char:    int64(item.Pos),
-				Comment: item.Typ == token.Token_COMMENT,
+				Comment: item.Typ == token.COMMENT,
 			}
 
 			if len(p.cdg) == 0 {
@@ -742,14 +742,14 @@ func (p *parser) parseEnumValues(docs *[]*ast.DocGroup_Doc, values *[]*ast.Field
 	for {
 		item := p.next()
 		switch {
-		case item.Typ == token.Token_RBRACE:
+		case item.Typ == token.RBRACE:
 			*docs = append(*docs, p.dg...)
 			p.dg = p.dg[:0]
 
 			*values = append(*values, p.fields...)
 			p.fields = p.fields[:0]
 			return int64(item.Pos)
-		case item.Typ == token.Token_IDENT || item.Typ.IsKeyword():
+		case item.Typ == token.IDENT || item.Typ.IsKeyword():
 			f := &ast.Field{
 				Name: &ast.Ident{NamePos: int64(item.Pos), Name: item.Val},
 			}
@@ -762,14 +762,14 @@ func (p *parser) parseEnumValues(docs *[]*ast.DocGroup_Doc, values *[]*ast.Field
 			}
 
 			item = p.peek()
-			if item.Typ == token.Token_AT {
+			if item.Typ == token.AT {
 				p.parseDirectives(&f.Directives)
 			}
-		case item.Typ == token.Token_COMMENT && p.mode&ParseComments != 0 || item.Typ == token.Token_DESCRIPTION:
+		case item.Typ == token.COMMENT && p.mode&ParseComments != 0 || item.Typ == token.DESCRIPTION:
 			d := &ast.DocGroup_Doc{
 				Text:    item.Val,
 				Char:    int64(item.Pos),
-				Comment: item.Typ == token.Token_COMMENT,
+				Comment: item.Typ == token.COMMENT,
 			}
 
 			if len(p.dg) == 0 {
@@ -796,11 +796,11 @@ func (p *parser) parseEnumValues(docs *[]*ast.DocGroup_Doc, values *[]*ast.Field
 func (p *parser) parseType() interface{} {
 	item := p.next()
 	switch item.Typ {
-	case token.Token_IDENT:
+	case token.IDENT:
 		v := &ast.Ident{NamePos: int64(item.Pos), Name: item.Val}
 
 		item = p.peek()
-		if item.Typ != token.Token_NOT {
+		if item.Typ != token.NOT {
 			return v
 		}
 		p.ignore()
@@ -808,7 +808,7 @@ func (p *parser) parseType() interface{} {
 		return &ast.NonNull{
 			Type: &ast.NonNull_Ident{Ident: v},
 		}
-	case token.Token_LBRACK:
+	case token.LBRACK:
 		v := &ast.List{}
 
 		typ := p.parseType()
@@ -822,12 +822,12 @@ func (p *parser) parseType() interface{} {
 		}
 
 		item = p.next()
-		if item.Typ != token.Token_RBRACK {
+		if item.Typ != token.RBRACK {
 			p.unexpected(item, "parseType:MissingListRBrack")
 		}
 
 		item = p.peek()
-		if item.Typ != token.Token_NOT {
+		if item.Typ != token.NOT {
 			return v
 		}
 		p.ignore()
@@ -845,9 +845,9 @@ func (p *parser) parseValue() interface{} {
 	item := p.next()
 
 	switch item.Typ {
-	case token.Token_INT, token.Token_FLOAT, token.Token_STRING, token.Token_BOOL, token.Token_NULL, token.Token_IDENT:
+	case token.INT, token.FLOAT, token.STRING, token.BOOL, token.NULL, token.IDENT:
 		return &ast.BasicLit{Kind: item.Typ, ValuePos: int64(item.Pos), Value: item.Val}
-	case token.Token_LBRACK:
+	case token.LBRACK:
 		list := &ast.ListLit_Composite{}
 
 		listLit := &ast.ListLit{List: &ast.ListLit_CompositeList{CompositeList: list}}
@@ -859,7 +859,7 @@ func (p *parser) parseValue() interface{} {
 		var c *ast.CompositeLit
 		for {
 			item = p.peek()
-			if item.Typ == token.Token_RBRACK {
+			if item.Typ == token.RBRACK {
 				p.ignore()
 				v.Closing = int64(item.Pos)
 				return v
@@ -875,7 +875,7 @@ func (p *parser) parseValue() interface{} {
 
 			list.Values = append(list.Values, c)
 		}
-	case token.Token_LBRACE:
+	case token.LBRACE:
 		objLit := new(ast.ObjLit)
 		v := &ast.CompositeLit{
 			Opening: int64(item.Pos),
@@ -884,17 +884,17 @@ func (p *parser) parseValue() interface{} {
 
 		for {
 			item = p.next()
-			if item.Typ == token.Token_RBRACE {
+			if item.Typ == token.RBRACE {
 				v.Closing = int64(item.Pos)
 				return v
 			}
-			if item.Typ != token.Token_IDENT {
+			if item.Typ != token.IDENT {
 				p.unexpected(item, "parseValue:InvalidObjectKey")
 			}
 
 			pair := &ast.ObjLit_Pair{Key: &ast.Ident{NamePos: int64(item.Pos), Name: item.Val}}
 			objLit.Fields = append(objLit.Fields, pair)
-			p.expect(token.Token_COLON, "parseValue:MissingColonInObjField")
+			p.expect(token.COLON, "parseValue:MissingColonInObjField")
 
 			val := p.parseValue()
 			switch ov := val.(type) {

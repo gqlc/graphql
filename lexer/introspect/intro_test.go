@@ -879,7 +879,7 @@ func compare(t *testing.T, ex, out lexer.Interface) {
 			return
 		}
 
-		if e.Typ == token.Token_EOF {
+		if e.Typ == token.EOF {
 			return
 		}
 	}

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/gogo/protobuf/proto"
 	"github.com/gqlc/graphql/ast"
 	"github.com/gqlc/graphql/lexer"
 	"github.com/gqlc/graphql/token"
@@ -115,10 +115,10 @@ func TestParseValue(t *testing.T) {
 		}
 
 		vals := map[string]ast.BasicLit{
-			"one":  {Kind: token.Token_INT, Value: "1"},
-			"two":  {Kind: token.Token_STRING, Value: `"2"`},
-			"thr":  {Kind: token.Token_FLOAT, Value: "3.0"},
-			"four": {Kind: token.Token_IDENT, Value: "true"},
+			"one":  {Kind: token.INT, Value: "1"},
+			"two":  {Kind: token.STRING, Value: `"2"`},
+			"thr":  {Kind: token.FLOAT, Value: "3.0"},
+			"four": {Kind: token.IDENT, Value: "true"},
 		}
 		for _, arg := range d.Args.Args {
 			b, ok := arg.Value.(*ast.Arg_BasicLit)
@@ -278,7 +278,7 @@ func TestDirectives(t *testing.T) {
 						Args: []*ast.Arg{
 							{
 								Name:  &ast.Ident{NamePos: 9, Name: "a"},
-								Value: &ast.Arg_BasicLit{BasicLit: &ast.BasicLit{Kind: token.Token_INT, ValuePos: 12, Value: "1"}},
+								Value: &ast.Arg_BasicLit{BasicLit: &ast.BasicLit{Kind: token.INT, ValuePos: 12, Value: "1"}},
 							},
 						},
 						Rparen: 13,
@@ -293,7 +293,7 @@ func TestDirectives(t *testing.T) {
 							{
 								Name: &ast.Ident{NamePos: 18, Name: "a"},
 								Value: &ast.Arg_BasicLit{BasicLit: &ast.BasicLit{
-									Kind:     token.Token_INT,
+									Kind:     token.INT,
 									ValuePos: 21,
 									Value:    "1",
 								}},
@@ -301,7 +301,7 @@ func TestDirectives(t *testing.T) {
 							{
 								Name: &ast.Ident{NamePos: 24, Name: "b"},
 								Value: &ast.Arg_BasicLit{BasicLit: &ast.BasicLit{
-									Kind:     token.Token_STRING,
+									Kind:     token.STRING,
 									ValuePos: 27,
 									Value:    "\"2\"",
 								}},
@@ -309,7 +309,7 @@ func TestDirectives(t *testing.T) {
 							{
 								Name: &ast.Ident{NamePos: 32, Name: "c"},
 								Value: &ast.Arg_BasicLit{BasicLit: &ast.BasicLit{
-									Kind:     token.Token_FLOAT,
+									Kind:     token.FLOAT,
 									ValuePos: 35,
 									Value:    "2.4",
 								}},
@@ -323,17 +323,17 @@ func TestDirectives(t *testing.T) {
 											Values: []*ast.CompositeLit{
 												{
 													Value: &ast.CompositeLit_BasicLit{
-														BasicLit: &ast.BasicLit{Kind: token.Token_INT, ValuePos: 44, Value: "1"},
+														BasicLit: &ast.BasicLit{Kind: token.INT, ValuePos: 44, Value: "1"},
 													},
 												},
 												{
 													Value: &ast.CompositeLit_BasicLit{
-														BasicLit: &ast.BasicLit{Kind: token.Token_INT, ValuePos: 46, Value: "2"},
+														BasicLit: &ast.BasicLit{Kind: token.INT, ValuePos: 46, Value: "2"},
 													},
 												},
 												{
 													Value: &ast.CompositeLit_BasicLit{
-														BasicLit: &ast.BasicLit{Kind: token.Token_INT, ValuePos: 48, Value: "3"},
+														BasicLit: &ast.BasicLit{Kind: token.INT, ValuePos: 48, Value: "3"},
 													},
 												},
 											},
@@ -353,7 +353,7 @@ func TestDirectives(t *testing.T) {
 												Val: &ast.CompositeLit{
 													Value: &ast.CompositeLit_BasicLit{
 														BasicLit: &ast.BasicLit{
-															Kind:     token.Token_STRING,
+															Kind:     token.STRING,
 															ValuePos: 63,
 															Value:    `"world!"`,
 														},
@@ -425,7 +425,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_SCALAR,
+						Tok:    token.SCALAR,
 						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
 							Name: &ast.Ident{NamePos: 8, Name: "Test"},
 							Type: &ast.TypeSpec_Scalar{Scalar: &ast.ScalarType{
@@ -444,7 +444,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_SCALAR,
+						Tok:    token.SCALAR,
 						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
 							Name: &ast.Ident{NamePos: 8, Name: "Test"},
 							Type: &ast.TypeSpec_Scalar{Scalar: &ast.ScalarType{
@@ -473,7 +473,7 @@ func TestParser(t *testing.T) {
 											{
 												Name: &ast.Ident{NamePos: 24, Name: "a"},
 												Value: &ast.Arg_BasicLit{BasicLit: &ast.BasicLit{
-													Kind:     token.Token_INT,
+													Kind:     token.INT,
 													ValuePos: 27,
 													Value:    "1",
 												}},
@@ -481,7 +481,7 @@ func TestParser(t *testing.T) {
 											{
 												Name: &ast.Ident{NamePos: 30, Name: "b"},
 												Value: &ast.Arg_BasicLit{BasicLit: &ast.BasicLit{
-													Kind:     token.Token_STRING,
+													Kind:     token.STRING,
 													ValuePos: 33,
 													Value:    "\"2\"",
 												}},
@@ -489,7 +489,7 @@ func TestParser(t *testing.T) {
 											{
 												Name: &ast.Ident{NamePos: 38, Name: "c"},
 												Value: &ast.Arg_BasicLit{BasicLit: &ast.BasicLit{
-													Kind:     token.Token_FLOAT,
+													Kind:     token.FLOAT,
 													ValuePos: 41,
 													Value:    "2.4",
 												}},
@@ -503,17 +503,17 @@ func TestParser(t *testing.T) {
 															Values: []*ast.CompositeLit{
 																{
 																	Value: &ast.CompositeLit_BasicLit{
-																		BasicLit: &ast.BasicLit{Kind: token.Token_INT, ValuePos: 50, Value: "1"},
+																		BasicLit: &ast.BasicLit{Kind: token.INT, ValuePos: 50, Value: "1"},
 																	},
 																},
 																{
 																	Value: &ast.CompositeLit_BasicLit{
-																		BasicLit: &ast.BasicLit{Kind: token.Token_INT, ValuePos: 52, Value: "2"},
+																		BasicLit: &ast.BasicLit{Kind: token.INT, ValuePos: 52, Value: "2"},
 																	},
 																},
 																{
 																	Value: &ast.CompositeLit_BasicLit{
-																		BasicLit: &ast.BasicLit{Kind: token.Token_INT, ValuePos: 54, Value: "3"},
+																		BasicLit: &ast.BasicLit{Kind: token.INT, ValuePos: 54, Value: "3"},
 																	},
 																},
 															},
@@ -533,7 +533,7 @@ func TestParser(t *testing.T) {
 																Val: &ast.CompositeLit{
 																	Value: &ast.CompositeLit_BasicLit{
 																		BasicLit: &ast.BasicLit{
-																			Kind:     token.Token_STRING,
+																			Kind:     token.STRING,
 																			ValuePos: 69,
 																			Value:    `"world!"`,
 																		},
@@ -562,7 +562,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_TYPE,
+						Tok:    token.TYPE,
 						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
 							Name: &ast.Ident{NamePos: 6, Name: "Test"},
 							Type: &ast.TypeSpec_Object{Object: &ast.ObjectType{
@@ -585,7 +585,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_TYPE,
+						Tok:    token.TYPE,
 						Doc: &ast.DocGroup{List: []*ast.DocGroup_Doc{
 							{Text: "# Hello\n", Comment: true, Char: 13},
 						}},
@@ -610,7 +610,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_TYPE,
+						Tok:    token.TYPE,
 						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
 							Name: &ast.Ident{NamePos: 6, Name: "Test"},
 							Type: &ast.TypeSpec_Object{Object: &ast.ObjectType{
@@ -639,7 +639,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_TYPE,
+						Tok:    token.TYPE,
 						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
 							Name: &ast.Ident{NamePos: 6, Name: "Test"},
 							Type: &ast.TypeSpec_Object{Object: &ast.ObjectType{
@@ -706,7 +706,7 @@ func TestParser(t *testing.T) {
 															Ident: &ast.Ident{NamePos: 87, Name: "One"},
 														},
 														Default: &ast.InputValue_BasicLit{
-															BasicLit: &ast.BasicLit{Kind: token.Token_INT, ValuePos: 93, Value: "1"},
+															BasicLit: &ast.BasicLit{Kind: token.INT, ValuePos: 93, Value: "1"},
 														},
 													},
 													{
@@ -764,7 +764,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_UNION,
+						Tok:    token.UNION,
 						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
 							Name: &ast.Ident{NamePos: 7, Name: "Test"},
 							Directives: []*ast.DirectiveLit{
@@ -797,7 +797,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_ENUM,
+						Tok:    token.ENUM,
 						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
 							Name: &ast.Ident{NamePos: 6, Name: "Test"},
 							Type: &ast.TypeSpec_Enum{Enum: &ast.EnumType{
@@ -825,7 +825,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_ENUM,
+						Tok:    token.ENUM,
 						Doc: &ast.DocGroup{List: []*ast.DocGroup_Doc{
 							{Text: "# Hello\n", Comment: true, Char: 13},
 						}},
@@ -850,7 +850,7 @@ func TestParser(t *testing.T) {
 				Types: []*ast.TypeDecl{
 					{
 						TokPos: 1,
-						Tok:    token.Token_DIRECTIVE,
+						Tok:    token.DIRECTIVE,
 						Spec: &ast.TypeDecl_TypeSpec{TypeSpec: &ast.TypeSpec{
 							Name: &ast.Ident{NamePos: 12, Name: "test"},
 							Type: &ast.TypeSpec_Directive{Directive: &ast.DirectiveType{
