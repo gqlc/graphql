@@ -18,6 +18,7 @@ func Lex(doc *token.Doc, name string, src io.Reader) lexer.Interface {
 		doc:   doc,
 		items: make(chan lexer.Item, 2),
 		buf:   make(itemBuf, 0, 12),
+		pos:   -2,
 	}
 
 	go s.run()
@@ -184,22 +185,22 @@ func scanDirectives(s *introScanner) stateFn {
 	s.expect(json.Delim('['), "directives opening")
 
 	for {
-		s.line += 1
-
 		tok := s.next()
 		if tok == json.Delim(']') {
 			return scanDoc
 		}
+		s.pos += 2
+
 		if tok != json.Delim('{') {
 			s.unexpected(tok, "directive opening")
 		}
+		s.line += 1
 
 		s.emit(token.Token_DIRECTIVE, "directive")
 
 		s.tokenizeDirectiveDecl()
 
 		s.emitBuf()
-		s.pos += 2
 	}
 }
 
@@ -207,30 +208,36 @@ func scanTypes(s *introScanner) stateFn {
 	s.expect(json.Delim('['), "types opening")
 
 	for {
-		s.line += 1
-
 		tok := s.next()
 		if tok == json.Delim(']') {
 			return scanDoc
 		}
+		s.pos += 2
+
 		if tok != json.Delim('{') {
 			s.unexpected(tok, "type opening")
 		}
+		s.line += 1
 
 		s.tokenizeTypeDecl()
 
 		s.emitBuf()
-		s.pos += 2
 	}
 }
 
 func (s *introScanner) emitBuf() {
 	inArgs := false
 	inList := false
+	lineOffset := 0
+
 	for i, itemP := range s.buf {
 		item := itemP.item
+		if item.Typ == token.Token_DESCRIPTION {
+			lineOffset = 1
+		}
 
 		item.Pos = token.Pos(s.pos) + 1
+		item.Line = s.line + lineOffset
 		s.pos += len(item.Val)
 
 		if i == len(s.buf)-1 {
