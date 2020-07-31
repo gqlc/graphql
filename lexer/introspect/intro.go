@@ -14,12 +14,13 @@ import (
 // Lex tokenize the results of an introspection query.
 func Lex(doc *token.Doc, src io.Reader) lexer.Interface {
 	s := &introScanner{
-		dec:   json.NewDecoder(src),
-		doc:   doc,
-		items: make(chan lexer.Item, 2),
-		buf:   make(itemBuf, 0, 12),
-		pos:   -2,
-		line:  -1,
+		dec:    json.NewDecoder(src),
+		doc:    doc,
+		items:  make(chan lexer.Item, 2),
+		buf:    make(itemBuf, 0, 12),
+		tmpBuf: make(itemBuf, 0, 12),
+		pos:    -2,
+		line:   -1,
 	}
 
 	go s.run()
@@ -86,7 +87,7 @@ type introScanner struct {
 	//		}
 	// 	]
 	//
-	buf itemBuf
+	buf, tmpBuf itemBuf
 }
 
 func (s *introScanner) NextItem() lexer.Item {
@@ -200,7 +201,7 @@ func scanDirectives(s *introScanner) stateFn {
 		s.emit(token.Token_DIRECTIVE, "directive")
 		s.pos += 1
 
-		s.tokenizeDirectiveDecl()
+		s.tokenizeDirectiveDecl(&s.tmpBuf)
 
 		s.emitBuf()
 	}
@@ -221,7 +222,7 @@ func scanTypes(s *introScanner) stateFn {
 		}
 		s.line += 2
 
-		s.tokenizeTypeDecl()
+		s.tokenizeTypeDecl(&s.tmpBuf)
 
 		s.emitBuf()
 	}
@@ -286,9 +287,7 @@ func (s *introScanner) emitBuf() {
 	s.buf = s.buf[:0]
 }
 
-func (s *introScanner) tokenizeDirectiveDecl() {
-	buf := make(itemBuf, 0, 12) // "descr" ident("descr" arg: Type = "default"): Type
-
+func (s *introScanner) tokenizeDirectiveDecl(buf *itemBuf) {
 	// Priorities:
 	// 0 - description
 	// 1 - @,name
@@ -350,21 +349,21 @@ func (s *introScanner) tokenizeDirectiveDecl() {
 				s.unexpected(tok, "args opening")
 			}
 
-			s.tokenizeObjList(&buf, "args closing", s.tokenizeInputValue)
+			s.tokenizeObjList(buf, "args closing", s.tokenizeInputValue)
 
-			if len(buf) == 0 {
+			if len(*buf) == 0 {
 				break
 			}
 
 			s.buf.insert(2, lexer.Item{Typ: token.Token_LPAREN, Val: "(", Line: s.line})
-			buf = buf[:len(buf)-1]
-			for _, i := range buf {
+			*buf = (*buf)[:len(*buf)-1]
+			for _, i := range *buf {
 				i.item.Line = s.line
 				s.buf.insert(2, i.item)
 			}
 			s.buf.insert(2, lexer.Item{Typ: token.Token_RPAREN, Val: ")", Line: s.line})
 
-			buf = buf[:0]
+			*buf = (*buf)[:0]
 		case "isRepeatable":
 			tok = s.next()
 			if tok == nil {
@@ -401,9 +400,7 @@ func (s *introScanner) tokenizeLocations(items *itemBuf, priority int) {
 	}
 }
 
-func (s *introScanner) tokenizeTypeDecl() {
-	buf := make(itemBuf, 0, 12) // "descr" ident("descr" arg: Type = "default"): Type
-
+func (s *introScanner) tokenizeTypeDecl(buf *itemBuf) {
 	// Priorities:
 	// 0 - description
 	// 1 - kind
@@ -455,14 +452,14 @@ func (s *introScanner) tokenizeTypeDecl() {
 			}
 
 			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{", Line: s.line})
-			s.tokenizeObjList(&buf, "fields closing", s.tokenizeField)
+			s.tokenizeObjList(buf, "fields closing", s.tokenizeField)
 
-			buf = buf[:len(buf)-1]
-			for _, i := range buf {
+			*buf = (*buf)[:len(*buf)-1]
+			for _, i := range *buf {
 				s.buf.insert(i.priority+4, i.item)
 			}
-			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: buf[len(buf)-1].item.Line + 1})
-			buf = buf[:0]
+			s.buf.insert(4+len(*buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: (*buf)[len(*buf)-1].item.Line + 1})
+			*buf = (*buf)[:0]
 		case "interfaces":
 			tok = s.next()
 			if tok == nil {
@@ -474,13 +471,13 @@ func (s *introScanner) tokenizeTypeDecl() {
 
 			s.buf.insert(3, lexer.Item{Typ: token.Token_IMPLEMENTS, Val: "implements", Line: s.line})
 
-			s.tokenizeObjList(&buf, "interfaces closing", s.tokenizeInterface)
+			s.tokenizeObjList(buf, "interfaces closing", s.tokenizeInterface)
 
-			buf = buf[:len(buf)-1]
-			for _, i := range buf {
+			*buf = (*buf)[:len(*buf)-1]
+			for _, i := range *buf {
 				s.buf.insert(3, i.item)
 			}
-			buf = buf[:0]
+			*buf = (*buf)[:0]
 		case "possibleTypes":
 			tok = s.next()
 			if tok == nil {
@@ -492,13 +489,13 @@ func (s *introScanner) tokenizeTypeDecl() {
 
 			s.buf.insert(3, lexer.Item{Typ: token.Token_ASSIGN, Val: "=", Line: s.line})
 
-			s.tokenizeObjList(&buf, "union members closing", s.tokenizeMember)
+			s.tokenizeObjList(buf, "union members closing", s.tokenizeMember)
 
-			buf = buf[:len(buf)-1]
-			for _, i := range buf {
+			*buf = (*buf)[:len(*buf)-1]
+			for _, i := range *buf {
 				s.buf.insert(4, i.item)
 			}
-			buf = buf[:0]
+			*buf = (*buf)[:0]
 		case "enumValues":
 			tok = s.next()
 			if tok == nil {
@@ -509,14 +506,14 @@ func (s *introScanner) tokenizeTypeDecl() {
 			}
 
 			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{", Line: s.line})
-			s.tokenizeObjList(&buf, "enum values closing", s.tokenizeField)
+			s.tokenizeObjList(buf, "enum values closing", s.tokenizeField)
 
-			buf = buf[:len(buf)-1]
-			for _, i := range buf {
+			*buf = (*buf)[:len(*buf)-1]
+			for _, i := range *buf {
 				s.buf.insert(i.priority+4, i.item)
 			}
-			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: buf[len(buf)-1].item.Line + 1})
-			buf = buf[:0]
+			s.buf.insert(4+len(*buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: (*buf)[len(*buf)-1].item.Line + 1})
+			*buf = (*buf)[:0]
 		case "inputFields":
 			tok = s.next()
 			if tok == nil {
@@ -527,14 +524,14 @@ func (s *introScanner) tokenizeTypeDecl() {
 			}
 
 			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{", Line: s.line})
-			s.tokenizeObjList(&buf, "input fields closing", s.tokenizeInputValue)
+			s.tokenizeObjList(buf, "input fields closing", s.tokenizeInputValue)
 
-			buf = buf[:len(buf)-1]
-			for _, i := range buf {
+			*buf = (*buf)[:len(*buf)-1]
+			for _, i := range *buf {
 				s.buf.insert(i.priority+4, i.item)
 			}
-			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: buf[len(buf)-1].item.Line + 1})
-			buf = buf[:0]
+			s.buf.insert(4+len(*buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: (*buf)[len(*buf)-1].item.Line + 1})
+			*buf = (*buf)[:0]
 		case "ofType":
 			tok = s.next()
 			if tok != nil {
