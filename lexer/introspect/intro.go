@@ -12,13 +12,14 @@ import (
 )
 
 // Lex tokenize the results of an introspection query.
-func Lex(doc *token.Doc, name string, src io.Reader) lexer.Interface {
+func Lex(doc *token.Doc, src io.Reader) lexer.Interface {
 	s := &introScanner{
 		dec:   json.NewDecoder(src),
 		doc:   doc,
 		items: make(chan lexer.Item, 2),
 		buf:   make(itemBuf, 0, 12),
 		pos:   -2,
+		line:  -1,
 	}
 
 	go s.run()
@@ -194,7 +195,7 @@ func scanDirectives(s *introScanner) stateFn {
 		if tok != json.Delim('{') {
 			s.unexpected(tok, "directive opening")
 		}
-		s.line += 1
+		s.line += 2
 
 		s.emit(token.Token_DIRECTIVE, "directive")
 		s.pos += 1
@@ -218,7 +219,7 @@ func scanTypes(s *introScanner) stateFn {
 		if tok != json.Delim('{') {
 			s.unexpected(tok, "type opening")
 		}
-		s.line += 1
+		s.line += 2
 
 		s.tokenizeTypeDecl()
 
@@ -244,8 +245,7 @@ func (s *introScanner) emitBuf() {
 		switch {
 		case item.Typ == token.Token_AT:
 		case item.Typ == token.Token_ON:
-			s.pos += 2
-			item.Pos += 1
+			s.pos += 1
 		case inList && item.Typ == token.Token_RBRACK:
 			item.Pos -= 1
 			inList = !inList
@@ -253,10 +253,16 @@ func (s *introScanner) emitBuf() {
 			inList = !inList
 		case item.Typ == token.Token_NOT:
 			item.Pos -= 1
-		case item.Typ == token.Token_LPAREN, item.Typ == token.Token_RPAREN:
+		case item.Typ == token.Token_LPAREN:
 			inArgs = !inArgs
 			s.pos -= 1
 			item.Pos -= 1
+		case item.Typ == token.Token_RPAREN:
+			inArgs = !inArgs
+			item.Pos -= 1
+			if s.buf[i+1].item.Typ == token.Token_COLON {
+				s.pos -= 1
+			}
 		case inList && item.Typ == token.Token_COMMA:
 			s.pos += 1
 			continue
@@ -345,6 +351,10 @@ func (s *introScanner) tokenizeDirectiveDecl() {
 			}
 
 			s.tokenizeObjList(&buf, "args closing", s.tokenizeInputValue)
+
+			if len(buf) == 0 {
+				break
+			}
 
 			s.buf.insert(2, lexer.Item{Typ: token.Token_LPAREN, Val: "(", Line: s.line})
 			buf = buf[:len(buf)-1]
@@ -675,6 +685,10 @@ func (s *introScanner) tokenizeField(i int, items *itemBuf) {
 			}
 
 			s.tokenizeObjList(&buf, "args closing", s.tokenizeInputValue)
+
+			if len(buf) == 0 {
+				break
+			}
 
 			items.insert(iLen+2, lexer.Item{Typ: token.Token_LPAREN, Val: "(", Line: s.line + i + 1})
 			buf = buf[:len(buf)-1]
