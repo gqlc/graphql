@@ -42,10 +42,11 @@ func TestLex(t *testing.T) {
 
   for _, testCase := range testCases {
     t.Run(testCase.Name, func(subT *testing.T) {
-      dset := token.NewDocSet()
-      ex := lexer.Lex(dset.AddDoc("ex", -1, len(testCase.Src)), testCase.Src)
+      exSet := token.NewDocSet()
+      ex := lexer.Lex(exSet.AddDoc("ex", -1, len(testCase.Src)), testCase.Src)
 
-      out := Lex(dset.AddDoc("out", -1, 500), "out", strings.NewReader(testCase.Intro))
+      outSet := token.NewDocSet()
+      out := Lex(outSet.AddDoc("out", -1, 500), "out", strings.NewReader(testCase.Intro))
 
       compare(subT, ex, out)
     })
@@ -65,6 +66,10 @@ func compare(t *testing.T, ex, out lexer.Interface) {
     if e != o {
       t.Logf("expected: %#v, got: %#v", e, o)
       t.Fail()
+      return
+    }
+
+    if e.Typ == token.Token_EOF {
       return
     }
   }
