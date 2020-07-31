@@ -120,7 +120,7 @@ func ParseIntrospection(dset *token.DocSet, name string, src io.Reader) (doc *as
 	p.pk.Line = -1
 
 	defer p.recover(&err)
-	p.l = introspect.Lex(d, name, src)
+	p.l = introspect.Lex(d, src)
 	p.doc = d
 
 	doc = &ast.Document{
