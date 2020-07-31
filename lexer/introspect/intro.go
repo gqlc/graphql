@@ -197,6 +197,7 @@ func scanDirectives(s *introScanner) stateFn {
 		s.line += 1
 
 		s.emit(token.Token_DIRECTIVE, "directive")
+		s.pos += 1
 
 		s.tokenizeDirectiveDecl()
 
@@ -241,6 +242,7 @@ func (s *introScanner) emitBuf() {
 		}
 
 		switch {
+		case item.Typ == token.Token_AT:
 		case item.Typ == token.Token_ON:
 			s.pos += 2
 			item.Pos += 1
@@ -250,6 +252,7 @@ func (s *introScanner) emitBuf() {
 		case item.Typ == token.Token_LBRACK:
 			inList = !inList
 		case item.Typ == token.Token_NOT:
+			item.Pos -= 1
 		case item.Typ == token.Token_LPAREN, item.Typ == token.Token_RPAREN:
 			inArgs = !inArgs
 			s.pos -= 1
@@ -305,7 +308,7 @@ func (s *introScanner) tokenizeDirectiveDecl() {
 				s.unexpected(tok, "description must be a string")
 			}
 
-			s.buf.insert(0, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr})
+			s.buf.insert(0, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr, Line: s.line})
 		case "name":
 			tok = s.next()
 			if tok == nil {
@@ -317,8 +320,8 @@ func (s *introScanner) tokenizeDirectiveDecl() {
 				s.unexpected(tok, "name must be a string")
 			}
 
-			s.buf.insert(1, lexer.Item{Typ: token.Token_AT, Val: "@"})
-			s.buf.insert(1, lexer.Item{Typ: token.Token_IDENT, Val: name})
+			s.buf.insert(1, lexer.Item{Typ: token.Token_AT, Val: "@", Line: s.line})
+			s.buf.insert(1, lexer.Item{Typ: token.Token_IDENT, Val: name, Line: s.line})
 		case "locations":
 			tok = s.next()
 			if tok == nil {
@@ -328,7 +331,7 @@ func (s *introScanner) tokenizeDirectiveDecl() {
 				s.unexpected(tok, "locations opening")
 			}
 
-			s.buf.insert(4, lexer.Item{Typ: token.Token_ON, Val: "on"})
+			s.buf.insert(4, lexer.Item{Typ: token.Token_ON, Val: "on", Line: s.line})
 
 			s.tokenizeLocations(&s.buf, 4)
 			s.buf = s.buf[:len(s.buf)-1]
@@ -343,12 +346,13 @@ func (s *introScanner) tokenizeDirectiveDecl() {
 
 			s.tokenizeObjList(&buf, "args closing", s.tokenizeInputValue)
 
-			s.buf.insert(2, lexer.Item{Typ: token.Token_LPAREN, Val: "("})
+			s.buf.insert(2, lexer.Item{Typ: token.Token_LPAREN, Val: "(", Line: s.line})
 			buf = buf[:len(buf)-1]
 			for _, i := range buf {
+				i.item.Line = s.line
 				s.buf.insert(2, i.item)
 			}
-			s.buf.insert(2, lexer.Item{Typ: token.Token_RPAREN, Val: ")"})
+			s.buf.insert(2, lexer.Item{Typ: token.Token_RPAREN, Val: ")", Line: s.line})
 
 			buf = buf[:0]
 		case "isRepeatable":
@@ -365,7 +369,7 @@ func (s *introScanner) tokenizeDirectiveDecl() {
 				break
 			}
 
-			s.buf.insert(3, lexer.Item{Typ: token.Token_REPEATABLE, Val: "repeatable"})
+			s.buf.insert(3, lexer.Item{Typ: token.Token_REPEATABLE, Val: "repeatable", Line: s.line})
 		}
 	}
 }
@@ -382,8 +386,8 @@ func (s *introScanner) tokenizeLocations(items *itemBuf, priority int) {
 			s.unexpected(tok, "directive location should be a string")
 		}
 
-		items.insert(priority, lexer.Item{Typ: token.Token_IDENT, Val: loc})
-		items.insert(priority, lexer.Item{Typ: token.Token_OR, Val: "|"})
+		items.insert(priority, lexer.Item{Typ: token.Token_IDENT, Val: loc, Line: s.line})
+		items.insert(priority, lexer.Item{Typ: token.Token_OR, Val: "|", Line: s.line})
 	}
 }
 
@@ -476,7 +480,7 @@ func (s *introScanner) tokenizeTypeDecl() {
 				s.unexpected(tok, "union members opening")
 			}
 
-			s.buf.insert(3, lexer.Item{Typ: token.Token_ASSIGN, Val: "="})
+			s.buf.insert(3, lexer.Item{Typ: token.Token_ASSIGN, Val: "=", Line: s.line})
 
 			s.tokenizeObjList(&buf, "union members closing", s.tokenizeMember)
 
@@ -494,14 +498,14 @@ func (s *introScanner) tokenizeTypeDecl() {
 				s.unexpected(tok, "enum values opening")
 			}
 
-			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{"})
+			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{", Line: s.line})
 			s.tokenizeObjList(&buf, "enum values closing", s.tokenizeField)
 
 			buf = buf[:len(buf)-1]
 			for _, i := range buf {
 				s.buf.insert(i.priority+4, i.item)
 			}
-			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}"})
+			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: buf[len(buf)-1].item.Line + 1})
 			buf = buf[:0]
 		case "inputFields":
 			tok = s.next()
@@ -512,14 +516,14 @@ func (s *introScanner) tokenizeTypeDecl() {
 				s.unexpected(tok, "input fields opening")
 			}
 
-			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{"})
+			s.buf.insert(4, lexer.Item{Typ: token.Token_LBRACE, Val: "{", Line: s.line})
 			s.tokenizeObjList(&buf, "input fields closing", s.tokenizeInputValue)
 
 			buf = buf[:len(buf)-1]
 			for _, i := range buf {
 				s.buf.insert(i.priority+4, i.item)
 			}
-			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}"})
+			s.buf.insert(4+len(buf), lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: buf[len(buf)-1].item.Line + 1})
 			buf = buf[:0]
 		case "ofType":
 			tok = s.next()
@@ -723,7 +727,7 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 	for {
 		tok := s.next()
 		if tok == json.Delim('}') {
-			items.insert(iLen+3, lexer.Item{Typ: token.Token_COMMA, Val: ",", Line: i + 1})
+			items.insert(iLen+3, lexer.Item{Typ: token.Token_COMMA, Val: ",", Line: s.line + i + 1})
 			return
 		}
 
@@ -738,8 +742,8 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 				s.unexpected(n, "name")
 			}
 
-			items.insert(iLen+1, lexer.Item{Typ: token.Token_IDENT, Val: n})
-			items.insert(iLen+1, lexer.Item{Typ: token.Token_COLON, Val: ":"})
+			items.insert(iLen+1, lexer.Item{Typ: token.Token_IDENT, Val: n, Line: s.line + i + 1})
+			items.insert(iLen+1, lexer.Item{Typ: token.Token_COLON, Val: ":", Line: s.line + i + 1})
 		case "description":
 			tok = s.next()
 			if tok == nil {
@@ -750,7 +754,7 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 				s.unexpected(descr, "description")
 			}
 
-			items.insert(iLen, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr})
+			items.insert(iLen, lexer.Item{Typ: token.Token_DESCRIPTION, Val: descr, Line: s.line + i})
 		case "type":
 			tok = s.next()
 			if tok == nil {
@@ -762,8 +766,9 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 
 			s.tokenizeTypeSig(&buf)
 
-			for _, i := range buf {
-				items.insert(iLen+2, i.item)
+			for _, it := range buf {
+				it.item.Line = s.line + i + 1
+				items.insert(iLen+2, it.item)
 			}
 			buf = buf[:0]
 		case "defaultValue":
@@ -776,9 +781,9 @@ func (s *introScanner) tokenizeInputValue(i int, items *itemBuf) {
 				s.unexpected(defaultVal, "description")
 			}
 
-			items.insert(iLen+3, lexer.Item{Typ: token.Token_ASSIGN, Val: "="})
+			items.insert(iLen+3, lexer.Item{Typ: token.Token_ASSIGN, Val: "=", Line: s.line + i + 1})
 
-			s.tokenizeValue(items, iLen+3, defaultVal)
+			s.tokenizeValue(items, iLen+3, s.line+i+1, defaultVal)
 		default:
 			s.unexpected(tok, "input value")
 		}
@@ -870,68 +875,68 @@ func (s *introScanner) tokenizeTypeSig(items *itemBuf) {
 	}
 }
 
-func (s *introScanner) tokenizeValue(items *itemBuf, priority int, val string) {
+func (s *introScanner) tokenizeValue(items *itemBuf, priority, line int, val string) {
 	if val == "true" || val == "false" {
-		items.insert(priority, lexer.Item{Typ: token.Token_BOOL, Val: val})
+		items.insert(priority, lexer.Item{Typ: token.Token_BOOL, Val: val, Line: line})
 		return
 	}
 
 	if unicode.IsDigit(rune(val[0])) {
 		if strings.Contains(val, ".") {
-			items.insert(priority, lexer.Item{Typ: token.Token_FLOAT, Val: val})
+			items.insert(priority, lexer.Item{Typ: token.Token_FLOAT, Val: val, Line: line})
 			return
 		}
-		items.insert(priority, lexer.Item{Typ: token.Token_INT, Val: val})
+		items.insert(priority, lexer.Item{Typ: token.Token_INT, Val: val, Line: line})
 		return
 	}
 
 	switch val[0] {
 	case '"':
-		items.insert(priority, lexer.Item{Typ: token.Token_STRING, Val: val})
+		items.insert(priority, lexer.Item{Typ: token.Token_STRING, Val: val, Line: line})
 	case '[':
-		s.tokenizeListLit(items, priority, val)
+		s.tokenizeListLit(items, priority, line, val)
 	case '{':
-		s.tokenizeObjLit(items, priority, val)
+		s.tokenizeObjLit(items, priority, line, val)
 	default:
 		s.errorf("invalid default value: %s", val)
 	}
 }
 
-func (s *introScanner) tokenizeListLit(items *itemBuf, priority int, val string) {
-	items.insert(priority, lexer.Item{Typ: token.Token_LBRACK, Val: "["})
+func (s *introScanner) tokenizeListLit(items *itemBuf, priority, line int, val string) {
+	items.insert(priority, lexer.Item{Typ: token.Token_LBRACK, Val: "[", Line: line})
 
 	end := 0
 	for {
 		val = val[end+1:]
 		if len(val) == 0 {
-			items.insert(priority, lexer.Item{Typ: token.Token_RBRACK, Val: "]"})
+			items.insert(priority, lexer.Item{Typ: token.Token_RBRACK, Val: "]", Line: line})
 			return
 		}
 
 		switch val[0] {
 		case '{':
-			s.tokenizeObjLit(items, priority, val)
+			s.tokenizeObjLit(items, priority, line, val)
 		case '[':
-			s.tokenizeListLit(items, priority, val)
+			s.tokenizeListLit(items, priority, line, val)
 		default:
 			end = strings.Index(val, ",")
 			if end == -1 {
 				end = len(val) - 1
 			}
 
-			s.tokenizeValue(items, priority, val[:end])
+			s.tokenizeValue(items, priority, line, val[:end])
 		}
 	}
 }
 
-func (s *introScanner) tokenizeObjLit(items *itemBuf, priority int, val string) {
-	items.insert(priority, lexer.Item{Typ: token.Token_LBRACE, Val: "{"})
+func (s *introScanner) tokenizeObjLit(items *itemBuf, priority, line int, val string) {
+	items.insert(priority, lexer.Item{Typ: token.Token_LBRACE, Val: "{", Line: line})
 
 	end := 0
 	for {
 		val = val[end+1:]
 		if len(val) == 0 {
-			items.insert(priority, lexer.Item{Typ: token.Token_RBRACE, Val: "}"})
+			items.insert(priority, lexer.Item{Typ: token.Token_RBRACE, Val: "}", Line: line})
 			return
 		}
 
@@ -940,22 +945,22 @@ func (s *introScanner) tokenizeObjLit(items *itemBuf, priority int, val string) 
 			s.errorf("missing colon in object literal")
 		}
 
-		items.insert(priority, lexer.Item{Typ: token.Token_IDENT, Val: val[:end]})
-		items.insert(priority, lexer.Item{Typ: token.Token_COLON, Val: ":"})
+		items.insert(priority, lexer.Item{Typ: token.Token_IDENT, Val: val[:end], Line: line})
+		items.insert(priority, lexer.Item{Typ: token.Token_COLON, Val: ":", Line: line})
 		val = val[end+1:]
 
 		switch val[0] {
 		case '{':
-			s.tokenizeObjLit(items, priority, val)
+			s.tokenizeObjLit(items, priority, line, val)
 		case '[':
-			s.tokenizeListLit(items, priority, val)
+			s.tokenizeListLit(items, priority, line, val)
 		default:
 			end = strings.Index(val, ",")
 			if end == -1 {
 				end = len(val) - 1
 			}
 
-			s.tokenizeValue(items, priority, val[:end])
+			s.tokenizeValue(items, priority, line, val[:end])
 		}
 	}
 }
