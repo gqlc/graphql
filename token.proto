@@ -53,4 +53,5 @@ enum Token {
     EXTEND = 35;
     DIRECTIVE = 36;
     ON = 37;
+    REPEATABLE = 38;
 }

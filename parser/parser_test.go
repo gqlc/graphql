@@ -3,16 +3,17 @@ package parser
 import (
 	"bytes"
 	"flag"
-	"github.com/gogo/protobuf/jsonpb"
-	"github.com/gogo/protobuf/proto"
-	"github.com/gqlc/graphql/ast"
-	"github.com/gqlc/graphql/lexer"
-	"github.com/gqlc/graphql/token"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/gogo/protobuf/jsonpb"
+	"github.com/gogo/protobuf/proto"
+	"github.com/gqlc/graphql/ast"
+	"github.com/gqlc/graphql/lexer"
+	"github.com/gqlc/graphql/token"
 )
 
 var (
@@ -389,6 +390,7 @@ func TestDirectives(t *testing.T) {
 			dset := token.NewDocSet()
 
 			p := new(parser)
+			p.pk.Line = -1
 			p.l = lexer.Lex(dset.AddDoc(testCase.Name, dset.Base(), len(testCase.Src)), testCase.Src)
 
 			var directives []*ast.DirectiveLit
@@ -886,6 +888,7 @@ func TestParser(t *testing.T) {
 			doc := dset.AddDoc(testCase.Name, dset.Base(), len(testCase.Src))
 			p.l = lexer.Lex(doc, testCase.Src)
 			p.doc = doc
+			p.pk.Line = -1
 
 			d := new(ast.Document)
 			p.parseDoc(&d.Types, &d.Directives)
@@ -910,7 +913,7 @@ func BenchmarkParseDoc(b *testing.B) {
 	name := "test"
 
 	for i := 0; i < b.N; i++ {
-		_, err := ParseDoc(dset, name, bytes.NewReader(gqlSrc), 0)
+		_, err := ParseDoc(dset, name, bytes.NewReader(gqlSrc), ParseComments)
 		if err != nil {
 			b.Error(err)
 			return
