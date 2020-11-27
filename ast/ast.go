@@ -3,8 +3,15 @@ package ast
 
 import (
 	"bytes"
+
 	"github.com/gqlc/graphql/token"
 )
+
+// Node represents a node in the AST.
+type Node interface {
+	Pos() token.Pos // position of first character belonging to the node
+	End() token.Pos // position of first character immediately after the node
+}
 
 // Pos returns the starting position of the argument.
 func (a *Arg) Pos() token.Pos {
@@ -276,6 +283,34 @@ func (s *TypeSpec) End() (e token.Pos) {
 }
 func (s *TypeExtensionSpec) End() token.Pos {
 	return s.Type.End()
+}
+
+func (x *TypeDecl) Pos() token.Pos { return token.Pos(x.TokPos) }
+func (x *Document) Pos() token.Pos { return 0 }
+
+func (x *TypeDecl) End() token.Pos {
+	n, ok := x.Spec.(Node)
+	if !ok {
+		panic("graphql/ast: unsupported type declaration spec")
+	}
+
+	return n.End()
+}
+func (x *Document) End() token.Pos {
+	if n := len(x.Types); n > 0 {
+		return x.Types[n-1].End()
+	}
+	return 0
+}
+
+func (x *DocGroup) Pos() token.Pos { return x.List[0].Pos() }
+func (x *DocGroup_Doc) Pos() token.Pos {
+	return token.Pos(x.Char)
+}
+
+func (x *DocGroup) End() token.Pos { return x.List[len(x.List)-1].End() }
+func (x *DocGroup_Doc) End() token.Pos {
+	return token.Pos(len(x.Text))
 }
 
 // Text returns the text of the comment.
