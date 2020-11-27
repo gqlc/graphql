@@ -45,6 +45,27 @@ func TestFprint_TypeDecls(t *testing.T) {
 			Name: "Scalar",
 			Src:  "scalar String",
 		},
+		{
+			Name: "Multiple Scalar",
+			Src: `scalar String
+
+scalar Int`,
+		},
+		{
+			Name: "Union",
+			Src:  "union Test = A | B | C",
+		},
+		{
+			Name: "Directive",
+			Src:  "directive @test on FIELD",
+		},
+		{
+			Name: "Object",
+			Src: `type Test implements A & B & C {
+	a: A
+	b: B
+}`,
+		},
 	}
 
 	for _, testCase := range testCases {

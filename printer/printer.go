@@ -4,6 +4,7 @@ package printer
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"text/tabwriter"
 	"unicode"
@@ -38,10 +39,10 @@ const (
 )
 
 type commentInfo struct {
-	cindex         int           // current comment index
-	comment        *ast.DocGroup // = printer.comments[cindex]; or nil
-	commentOffset  int           // = printer.posFor(printer.comments[cindex].List[0].Pos()).Offset; or infinity
-	commentNewline bool          // true if the comment group contains newlines
+	cindex         int               // current comment index
+	comment        *ast.DocGroup_Doc // = printer.comments[cindex]; or nil
+	commentOffset  int               // = printer.posFor(printer.comments[cindex].List[0].Pos()).Offset; or infinity
+	commentNewline bool              // true if the comment group contains newlines
 }
 
 type printer struct {
@@ -71,8 +72,8 @@ type printer struct {
 	linePtr *int           // if set, record out.Line for the next token in *linePtr
 
 	// The list of all source comments, in order of appearance.
-	comments        []*ast.DocGroup // may be nil
-	useNodeComments bool            // if not set, ignore lead and line comments of nodes
+	comments        []*ast.DocGroup_Doc // may be nil
+	useNodeComments bool                // if not set, ignore lead and line comments of nodes
 
 	// Information about p.comments[p.cindex]; set up by nextComment.
 	commentInfo
@@ -99,6 +100,40 @@ func (p *printer) internalError(msg ...interface{}) {
 	fmt.Print(p.pos.String() + ": ")
 	fmt.Println(msg...)
 	panic("graphql/printer")
+}
+
+// commentsHaveNewline reports whether a list of comments belonging to
+// an *ast.CommentGroup contains newlines. Because the position information
+// may only be partially correct, we also have to read the comment text.
+func (p *printer) commentsHaveNewline(list []*ast.DocGroup_Doc) bool {
+	// len(list) > 0
+	line := p.lineFor(list[0].Pos())
+	for i, c := range list {
+		if i > 0 && p.lineFor(list[i].Pos()) != line {
+			// not all comments on the same line
+			return true
+		}
+		if t := c.Text; len(t) >= 2 && (t[1] == '/' || strings.Contains(t, "\n")) {
+			return true
+		}
+	}
+	_ = line
+	return false
+}
+
+func (p *printer) nextComment() {
+	for p.cindex < len(p.comments) {
+		c := p.comments[p.cindex]
+		p.cindex++
+		p.comment = c
+		p.commentOffset = p.posFor(c.Pos()).Offset
+		p.commentNewline = p.commentsHaveNewline([]*ast.DocGroup_Doc{c})
+		return
+		// we should not reach here (correct ASTs don't have empty
+		// ast.CommentGroup nodes), but be conservative and try again
+	}
+	// no more comments
+	p.commentOffset = infinity
 }
 
 // commentBefore reports whether the current comment group occurs
@@ -661,11 +696,9 @@ func (p *printer) containsLinebreak() bool {
 func (p *printer) intersperseComments(next token.Position, tok token.Token) (wroteNewline, droppedFF bool) {
 	var last *ast.DocGroup_Doc
 	for p.commentBefore(next) {
-		for _, c := range p.comment.List {
-			p.writeCommentPrefix(p.posFor(c.Pos()), next, last, tok)
-			p.writeComment(c)
-			last = c
-		}
+		p.writeCommentPrefix(p.posFor(p.comment.Pos()), next, last, tok)
+		p.writeComment(p.comment)
+		last = p.comment
 		p.nextComment()
 	}
 
@@ -759,6 +792,161 @@ func nlimit(n int) int {
 	return n
 }
 
+// print prints a list of "items" (roughly corresponding to syntactic
+// tokens, but also including whitespace and formatting information).
+// It is the only print function that should be called directly from
+// any of the AST printing functions in nodes.go.
+//
+// Whitespace is accumulated until a non-whitespace token appears. Any
+// comments that need to appear before that token are printed first,
+// taking into account the amount and structure of any pending white-
+// space for best comment placement. Then, any leftover whitespace is
+// printed, followed by the actual token.
+//
+func (p *printer) print(args ...interface{}) {
+	for _, arg := range args {
+		// information about the current arg
+		var data string
+		var isLit bool
+		var impliedSemi bool // value for p.impliedSemi after this arg
+
+		// record previous opening token, if any
+		switch p.lastTok {
+		case token.Token_UNKNOWN:
+			// ignore (white space)
+		case token.Token_LPAREN, token.Token_LBRACK:
+			p.prevOpen = p.lastTok
+		default:
+			// other tokens followed any opening token
+			p.prevOpen = token.Token_UNKNOWN
+		}
+
+		switch x := arg.(type) {
+		case pmode:
+			// toggle printer mode
+			p.mode ^= x
+			continue
+
+		case whiteSpace:
+			if x == ignore {
+				// don't add ignore's to the buffer; they
+				// may screw up "correcting" unindents (see
+				// LabeledStmt)
+				continue
+			}
+			i := len(p.wsbuf)
+			if i == cap(p.wsbuf) {
+				// Whitespace sequences are very short so this should
+				// never happen. Handle gracefully (but possibly with
+				// bad comment placement) if it does happen.
+				p.writeWhitespace(i)
+				i = 0
+			}
+			p.wsbuf = p.wsbuf[0 : i+1]
+			p.wsbuf[i] = x
+			if x == newline || x == formfeed {
+				// newlines affect the current state (p.impliedSemi)
+				// and not the state after printing arg (impliedSemi)
+				// because comments can be interspersed before the arg
+				// in this case
+				p.impliedSemi = false
+			}
+			p.lastTok = token.Token_UNKNOWN
+			continue
+
+		case *ast.Ident:
+			data = x.Name
+			impliedSemi = true
+			p.lastTok = token.Token_IDENT
+		case *ast.List:
+			// TODO
+		case *ast.NonNull:
+			// TODO
+		case *ast.DirectiveLocation:
+			data = x.Loc.String()
+			impliedSemi = true
+			p.lastTok = token.Token_IDENT
+		case *ast.BasicLit:
+			data = x.Value
+			isLit = true
+			impliedSemi = true
+			p.lastTok = x.Kind
+
+		case token.Token:
+			s := strings.ToLower(x.String())
+			if false /*mayCombine(p.lastTok, s[0])*/ {
+				// the previous and the current token must be
+				// separated by a blank otherwise they combine
+				// into a different incorrect token sequence
+				// (except for token.INT followed by a '.' this
+				// should never happen because it is taken care
+				// of via binary expression formatting)
+				if len(p.wsbuf) != 0 {
+					p.internalError("whitespace buffer not empty")
+				}
+				p.wsbuf = p.wsbuf[0:1]
+				p.wsbuf[0] = ' '
+			}
+			data = s
+			// some keywords followed by a newline imply a semicolon
+			switch x {
+			case token.Token_RPAREN, token.Token_RBRACK, token.Token_RBRACE:
+				impliedSemi = true
+			}
+			p.lastTok = x
+
+		case token.Pos:
+			if x.IsValid() {
+				p.pos = p.posFor(x) // accurate position of next item
+			}
+			continue
+
+		case string:
+			// incorrect AST - print error message
+			data = x
+			isLit = true
+			impliedSemi = true
+			p.lastTok = token.Token_STRING
+
+		default:
+			fmt.Fprintf(os.Stderr, "print: unsupported argument %v (%T)\n", arg, arg)
+			panic("go/printer type")
+		}
+		// data != ""
+
+		next := p.pos // estimated/accurate position of next item
+		wroteNewline, droppedFF := p.flush(next, p.lastTok)
+
+		// intersperse extra newlines if present in the source and
+		// if they don't cause extra semicolons (don't do this in
+		// flush as it will cause extra newlines at the end of a file)
+		if !p.impliedSemi {
+			n := nlimit(next.Line - p.pos.Line)
+			// don't exceed maxNewlines if we already wrote one
+			if wroteNewline && n == maxNewlines {
+				n = maxNewlines - 1
+			}
+			if n > 0 {
+				ch := byte('\n')
+				if droppedFF {
+					ch = '\f' // use formfeed since we dropped one before
+				}
+				p.writeByte(ch, n)
+				impliedSemi = false
+			}
+		}
+
+		// the next token starts now - record its line number if requested
+		if p.linePtr != nil {
+			*p.linePtr = p.out.Line
+			p.linePtr = nil
+		}
+
+		p.writeString(next, data, isLit)
+		p.impliedSemi = impliedSemi
+	}
+}
+
 // flush prints any pending comments and whitespace occurring textually
 // before the position of the next token tok. The flush result indicates
 // if a newline was written or if a formfeed was dropped from the whitespace
@@ -790,6 +978,22 @@ func getDoc(n ast.Node) *ast.DocGroup {
 	return nil
 }
 
+func getLastComment(n ast.Node) *ast.DocGroup {
+	switch n := n.(type) {
+	case *ast.InputValue:
+		return n.Doc
+	case *ast.Field:
+		return n.Doc
+	case *ast.TypeDecl:
+		return n.Doc
+	case *ast.Document:
+		if len(n.Doc.List) > 0 {
+			return n.Doc
+		}
+	}
+	return nil
+}
+
 func (p *printer) printNode(node interface{}) error {
 	var docs *ast.DocGroup
 
@@ -816,19 +1020,19 @@ func (p *printer) printNode(node interface{}) error {
 		// token.Pos values are global offsets, we can
 		// compare them directly
 		i := 0
-		for i < len(docs) && docs[i].End() < beg {
+		for i < len(docs.List) && docs.List[i].End() < beg {
 			i++
 		}
 		j := i
-		for j < len(docs) && docs[j].Pos() < end {
+		for j < len(docs.List) && docs.List[j].Pos() < end {
 			j++
 		}
 		if i < j {
-			p.comments = docs[i:j]
+			p.comments = docs.List[i:j]
 		}
 	} else if n, ok := node.(*ast.Document); ok {
 		// use ast.File comments, if any
-		p.comments = n.Doc
+		p.comments = n.Doc.List
 	}
 
 	// if there are no comments, use node comments
@@ -839,10 +1043,10 @@ func (p *printer) printNode(node interface{}) error {
 
 	// format node
 	switch n := node.(type) {
-	case *ast.Arg:
-		p.args([]*ast.Arg{n})
-	case []*ast.Arg:
-		p.args(n)
+	case *ast.TypeDecl:
+		p.declList([]*ast.TypeDecl{n})
+	case []*ast.TypeDecl:
+		p.declList(n)
 	default:
 		goto unsupported
 	}
@@ -965,6 +1169,22 @@ const (
 	RawFormat Mode = 1 << iota // do not use a tabwriter; if set, UseSpaces is ignored
 	TabIndent                  // use tabs for indentation independent of UseSpaces
 	UseSpaces                  // use spaces instead of tabs for alignment
+)
+
+// The mode below is not included in printer's public API because
+// editing code text is deemed out of scope. Because this mode is
+// unexported, it's also possible to modify or remove it based on
+// the evolving needs of go/format and cmd/gofmt without breaking
+// users. See discussion in CL 240683.
+const (
+	// normalizeNumbers means to canonicalize number
+	// literal prefixes and exponents while printing.
+	//
+	// This value is known in and used by go/format and cmd/gofmt.
+	// It is currently more convenient and performant for those
+	// packages to apply number normalization during printing,
+	// rather than by modifying the AST in advance.
+	normalizeNumbers Mode = 1 << 30
 )
 
 // Config controls the output of Fprint and FromIntrospection.
